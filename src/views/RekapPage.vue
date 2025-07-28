@@ -119,17 +119,30 @@ wargaList.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
 };
 
 const fetchRekap = async () => {
-const startOfMonth = new Date(selectedYear.value, selectedMonth.value - 1, 1);
-const endOfMonth = new Date(selectedYear.value, selectedMonth.value, 0, 23, 59, 59, 999);
+  // Membuat objek Date JavaScript untuk awal dan akhir bulan
+  const startOfMonth = new Date(selectedYear.value, selectedMonth.value - 1, 1);
+  // Untuk akhir bulan, pastikan hingga detik terakhir hari terakhir bulan
+  const endOfMonth = new Date(selectedYear.value, selectedMonth.value, 0, 23, 59, 59, 999);
 
-const q = query(
-collection(db, 'iuran'),
-where('tanggal', '>=', startOfMonth.toISOString().substring(0, 10)),
-where('tanggal', '<=', endOfMonth.toISOString().substring(0, 10))
-);
+  console.log('Filtering from:', startOfMonth.toISOString(), 'to:', endOfMonth.toISOString()); // Untuk debugging
 
-const querySnapshot = await getDocs(q);
-const iuranBulanIni = querySnapshot.docs.map(doc => doc.data());
+  const q = query(
+    collection(db, 'iuran'),
+    // --- PERBAIKAN PENTING DI SINI ---
+    where('tanggal', '>=', startOfMonth), // Gunakan objek Date JavaScript
+    where('tanggal', '<=', endOfMonth)     // Gunakan objek Date JavaScript
+  );
+
+  const querySnapshot = await getDocs(q);
+  // Pastikan Anda memproses tanggal dari Timestamp yang diambil, meskipun tidak langsung untuk filter
+  const iuranBulanIni = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      // data.tanggal sekarang adalah Firestore Timestamp, Anda mungkin tidak perlu mengkonversinya langsung
+      // di sini kecuali untuk debugging atau tampilan awal.
+      return data;
+  });
+
+  console.log('Iuran ditemukan untuk bulan ini:', iuranBulanIni); // Untuk debugging
 
 const rekap = {};
 wargaList.value.forEach(warga => {

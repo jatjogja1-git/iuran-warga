@@ -64,30 +64,31 @@ clearable
               v-model.number="newIuran.jumlah"
               required
             ></v-text-field>
+            
             <v-menu
-              v-model="tanggalMenu"
-              :close-on-content-click="false"
-              :nudge-right="40"
-              transition="scale-transition"
-              offset-y
-              min-width="auto"
-            >
-              <template v-slot:activator="{ props }">
-                <v-text-field
-                  v-model="newIuran.tanggal"
-                  label="Tanggal Iuran"
-                  prepend-icon="mdi-calendar"
-                  readonly
-                  v-bind="props"
-                ></v-text-field>
-              </template>
-              <v-date-picker
-                v-model="newIuran.tanggal"
-                no-title
-                scrollable
-                @update:model-value="tanggalMenu = false"
-              ></v-date-picker>
-            </v-menu>
+  v-model="tanggalMenu"
+  :close-on-content-click="false"
+  :nudge-right="40"
+  transition="scale-transition"
+  offset-y
+  min-width="auto"
+>
+  <template v-slot:activator="{ props }">
+    <v-text-field
+      :model-value="formatDateDisplay(newIuran.tanggalObj)" 
+      label="Tanggal Iuran"
+      prepend-icon="mdi-calendar"
+      readonly
+      v-bind="props"
+    ></v-text-field>
+  </template>
+  <v-date-picker
+    v-model="newIuran.tanggalObj" 
+    no-title
+    scrollable
+    @update:model-value="tanggalMenu = false"
+  ></v-date-picker>
+</v-menu>
           </v-container>
         </v-card-text>
         <v-card-actions>
@@ -139,8 +140,25 @@ console.log(formattedDate);
 const newIuran = ref({
 wargaId: null,
 jumlah: 0,
-tanggal: new Date().toISOString().substring(0, 10) // Format YYYY-MM-DD
+//tanggal: new Date().toISOString().substring(0, 10) // Format YYYY-MM-DD
+tanggalObj: new Date() // Inisialisasi dengan objek Date hari ini
 });
+
+// Fungsi helper untuk menampilkan tanggal dari objek Date
+const formatDateDisplay = (dateObj) => {
+  if (!dateObj) return '';
+  // Jika dateObj adalah Timestamp dari Firestore (saat diedit)
+  if (dateObj && typeof dateObj.toDate === 'function') {
+    dateObj = dateObj.toDate();
+  }
+  if (dateObj instanceof Date) {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`; // Format untuk tampilan YYYY-MM-DD
+  }
+  return '';
+};
 
 // --- Headers untuk v-data-table ---
 const headers = [
@@ -155,6 +173,8 @@ const querySnapshot = await getDocs(collection(db, 'warga'));
 wargaList.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
+
+/*
 const fetchIuran = async () => {
 const iuranCollection = collection(db, 'iuran');
 const q = query(iuranCollection, orderBy('tanggal', 'desc')); // Urutkan berdasarkan tanggal terbaru
@@ -171,7 +191,30 @@ fetchedIuran.push({
 }
 iuran.value = fetchedIuran;
 };
+*/
 
+// Modifikasi fetchIuran untuk menangani Timestamp
+const fetchIuran = async () => {
+    const iuranCollection = collection(db, 'iuran');
+    const q = query(iuranCollection, orderBy('tanggal', 'desc'));
+    const querySnapshot = await getDocs(q);
+    const fetchedIuran = [];
+    for (const docIuran of querySnapshot.docs) {
+        const dataIuran = docIuran.data();
+        const wargaData = wargaList.value.find(w => w.id === dataIuran.wargaId);
+        fetchedIuran.push({
+            id: docIuran.id,
+            ...dataIuran,
+            // Pastikan tanggal saat mengambil juga dalam format yang tepat untuk v-date-picker jika ingin mengeditnya nanti
+            tanggal: dataIuran.tanggal, // Ini akan menjadi Timestamp
+            tanggalObj: dataIuran.tanggal ? dataIuran.tanggal.toDate() : null, // Konversi ke Date object untuk v-date-picker edit
+            namaWarga: wargaData ? wargaData.nama : 'Warga Tidak Ditemukan'
+        });
+    }
+    iuran.value = fetchedIuran;
+};
+
+/*
 const openDialog = () => {
 dialog.value = true;
 newIuran.value = {
@@ -180,11 +223,34 @@ jumlah: 0,
 tanggal: new Date().toISOString().substring(0, 10)
 };
 };
+*/
+
+
+// Modifikasi openDialog untuk menginisialisasi tanggalObj
+const openDialog = (mode, item = null) => {
+    dialog.value = true;
+    dialogMode.value = mode; // Pastikan dialogMode dideklarasikan (kalau ada)
+    if (mode === 'add') {
+        newIuran.value = {
+            wargaId: null,
+            jumlah: 0,
+            tanggalObj: new Date() // Objek Date untuk tanggal hari ini
+        };
+    } else { // Mode edit, jika Anda mengimplementasikannya
+        newIuran.value = {
+            id: item.id,
+            wargaId: item.wargaId,
+            jumlah: item.jumlah,
+            tanggalObj: item.tanggal ? item.tanggal.toDate() : null // Konversi Timestamp ke Date object
+        };
+    }
+};
 
 const closeDialog = () => {
 dialog.value = false;
 };
 
+/*
 const saveIuran = async () => {
 await addDoc(collection(db, 'iuran'), {
 wargaId: newIuran.value.wargaId,
@@ -194,6 +260,21 @@ tanggal: newIuran.value.tanggal
 closeDialog();
 await fetchIuran();
 };
+*/
+
+const saveIuran = async () => {
+  console.log("Saving Iuran. Data to save:", newIuran.value);
+  console.log("Tanggal object to save:", newIuran.value.tanggalObj, "Type:", typeof newIuran.value.tanggalObj);
+
+  await addDoc(collection(db, 'iuran'), {
+    wargaId: newIuran.value.wargaId,
+    jumlah: newIuran.value.jumlah,
+    tanggal: newIuran.value.tanggalObj // Firestore akan otomatis mengkonversi objek Date ini menjadi Timestamp
+  });
+  closeDialog();
+  await fetchIuran();
+};
+
 
 const deleteIuran = async (id) => {
 if (confirm('Apakah Anda yakin ingin menghapus iuran ini?')) {
@@ -202,6 +283,7 @@ await fetchIuran();
 }
 };
 
+/*
 const formatDate = (dateString) => {
 if (!dateString) return '';
 const date = new Date(dateString);
@@ -212,11 +294,22 @@ const month = String(today.getMonth() + 1).padStart(2, '0'); // Mengambil bulan 
 const year = today.getFullYear(); // Mengambil tahun (YYYY)
 const formattedDate = `${day}-${month}-${year}`; // Menggabungkan semuanya
 
-
 //return date.toLocaleDateString('id-ID', day, month, year);
 return date.toLocaleDateString('id-ID', options);
-
 };
+*/
+
+// Saat mengambil data dari Firestore, `tanggal` akan berupa Timestamp
+// Anda perlu mengkonversinya ke string untuk ditampilkan di v-data-table
+const formatDate = (firestoreTimestamp) => {
+  if (!firestoreTimestamp) return '';
+  // Pastikan firestoreTimestamp adalah objek Timestamp, lalu konversi ke Date
+  const date = firestoreTimestamp.toDate();
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return date.toLocaleDateString('id-ID', options);
+};
+
+
 
 const formatRupiah = (amount) => {
 return new Intl.NumberFormat('id-ID', {
