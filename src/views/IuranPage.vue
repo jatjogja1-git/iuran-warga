@@ -155,8 +155,10 @@ const formatDateDisplay = (dateObj) => {
     const year = dateObj.getFullYear();
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     const day = String(dateObj.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`; // Format untuk tampilan YYYY-MM-DD
-  }
+//    return `${year}-${month}-${day}`; // Format untuk tampilan YYYY-MM-DD
+    return `${day}-${month}-${year}`; // Format untuk tampilan DD-MM-YYYY
+
+}
   return '';
 };
 
@@ -174,24 +176,6 @@ wargaList.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
 };
 
 
-/*
-const fetchIuran = async () => {
-const iuranCollection = collection(db, 'iuran');
-const q = query(iuranCollection, orderBy('tanggal', 'desc')); // Urutkan berdasarkan tanggal terbaru
-const querySnapshot = await getDocs(q);
-const fetchedIuran = [];
-for (const docIuran of querySnapshot.docs) {
-const dataIuran = docIuran.data();
-const wargaData = wargaList.value.find(w => w.id === dataIuran.wargaId);
-fetchedIuran.push({
-  id: docIuran.id,
-  ...dataIuran,
-  namaWarga: wargaData ? wargaData.nama : 'Warga Tidak Ditemukan'
-});
-}
-iuran.value = fetchedIuran;
-};
-*/
 
 // Modifikasi fetchIuran untuk menangani Timestamp
 const fetchIuran = async () => {
@@ -320,6 +304,7 @@ minimumFractionDigits: 0
 };
 
 
+/*
 // --- Fungsi Ekspor ---
 const exportToExcel = (dataType) => {
 let dataToExport = [];
@@ -343,44 +328,272 @@ XLSX.utils.book_append_sheet(wb, ws, dataType);
 XLSX.writeFile(wb, fileName);
 };
 
+
+
+// Import library ekspor
+
+// ... (kode lainnya, pastikan Anda punya fungsi formatTanggalUntukPdf atau serupa)
+
+// Fungsi yang sama dengan yang kita buat untuk PDF, atau fungsi lain yang memformat ke DD-MM-YYYY
+// Pastikan fungsi ini tersedia dalam scope script Anda.
+const formatTanggalUntukExcel = (dateValue) => {
+  if (!dateValue) return '';
+
+  let dateToFormat;
+  if (typeof dateValue.toDate === 'function') { // Jika Firestore Timestamp
+    dateToFormat = dateValue.toDate();
+  } else if (dateValue instanceof Date) { // Jika sudah objek Date JS
+    dateToFormat = dateValue;
+  } else if (typeof dateValue === 'string') { // Jika masih string (misal YYYY-MM-DD)
+    dateToFormat = new Date(dateValue);
+    if (isNaN(dateToFormat.getTime())) {
+      console.warn("Invalid date string for Excel export:", dateValue);
+      return dateValue; // Kembalikan string asli jika tidak valid
+    }
+  } else {
+    return dateValue;
+  }
+
+  // Format ke DD-MM-YYYY
+  const day = String(dateToFormat.getDate()).padStart(2, '0');
+  const month = String(dateToFormat.getMonth() + 1).padStart(2, '0'); // getMonth() is 0-indexed
+  const year = dateToFormat.getFullYear();
+
+  return `${day}-${month}-${year}`;
+};
+*/
+
+
+
+/*
+// --- Fungsi Ekspor ---
+const exportToExcel = (dataType) => {
+  let dataToExport = [];
+  let fileName = '';
+
+  if (dataType === 'iuran') {
+    // Ambil semua data iuran, lalu petakan
+    dataToExport = iuran.value.map(item => {
+      // Buat objek baru agar tidak memodifikasi data asli
+      const newItem = { ...item };
+
+      // Hapus properti 'id' jika tidak ingin diekspor
+      delete newItem.id;
+
+      // --- PERBAIKAN PENTING DI SINI ---
+      // Format properti 'tanggal'
+      if (newItem.tanggal) {
+        newItem.tanggal = formatTanggalUntukExcel(newItem.tanggal);
+      }
+      // --- AKHIR PERBAIKAN ---
+
+      // Jika ada properti lain yang perlu diformat (misalnya 'jumlah' ke Rupiah string)
+      // if (newItem.jumlah) {
+      //   newItem.jumlah = formatRupiah(newItem.jumlah); // Jika Anda ingin angka di Excel tetap angka, jangan format ini
+      // }
+
+      return newItem;
+    });
+    fileName = 'data_iuran.xlsx';
+  }
+  // Tambahkan kondisi untuk dataType lain jika Anda membuat fungsi ini generik
+  // else if (dataType === 'rekap') {
+  //   // Contoh jika Anda punya exportToExcel untuk rekap data:
+  //   dataToExport = rekapData.value.map(item => ({
+  //     'Nama Warga': item.namaWarga,
+  //     'Total Iuran': item.totalIuran // Biarkan angka untuk perhitungan di Excel
+  //   }));
+  //   fileName = `rekap_iuran_${months.find(m => m.value === selectedMonth.value)?.text}_${selectedYear.value}.xlsx`;
+  // }
+
+
+  if (dataToExport.length === 0) {
+    alert("Tidak ada data untuk diekspor.");
+    return;
+  }
+
+  // Tambahan: Mengatur lebar kolom otomatis atau format header agar lebih bagus
+  // Ini adalah fitur lanjutan dari library XLSX, mungkin tidak perlu untuk kasus dasar.
+  // const ws = XLSX.utils.json_to_sheet(dataToExport, { cellDates: false }); // cellDates: false penting jika sudah diformat ke string
+  // const wb = XLSX.utils.book_new();
+  // XLSX.utils.book_append_sheet(wb, ws, dataType);
+  // XLSX.writeFile(wb, fileName);
+
+  const ws = XLSX.utils.json_to_sheet(dataToExport);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, dataType);
+  XLSX.writeFile(wb, fileName);
+};
+*/
+
+// --- Fungsi Ekspor ---
+const exportToExcel = (dataType) => {
+  let dataToExport = [];
+  let fileName = '';
+
+  if (dataType === 'iuran') {
+    dataToExport = iuran.value.map(item => {
+      // Buat salinan objek untuk menghindari modifikasi data asli
+      const newItem = { ...item };
+
+      // Hapus properti yang tidak diinginkan dari hasil ekspor
+      delete newItem.id;
+      // --- PERBAIKAN PENTING DI SINI ---
+      delete newItem.tanggalObj; // Hapus properti tanggalObj agar tidak ikut diekspor
+      delete newItem.wargaId;
+      // --- AKHIR PERBAIKAN ---
+
+      // Format properti 'tanggal' ke format DD-MM-YYYY untuk tampilan di Excel
+      if (newItem.tanggal) {
+        newItem.tanggal = formatTanggalUntukExcel(newItem.tanggal);
+      };
+
+      if (newItem.jumlah) {
+        newItem.jumlah = formatRupiah(newItem.jumlah); //hilangkan ini jika ingin di kolom excel di Sum
+      };
+
+      
+      // Anda juga bisa mengganti nama properti jika diperlukan untuk header Excel yang lebih baik
+      // Misalnya: newItem['Nama Warga'] = newItem.namaWarga; delete newItem.namaWarga;
+
+      return newItem;
+    });
+    fileName = 'data_iuran.xlsx';
+  }
+  // ... (kode untuk dataType lain seperti 'rekap' jika ada)
+
+  if (dataToExport.length === 0) {
+    alert("Tidak ada data untuk diekspor.");
+    return;
+  }
+
+  const ws = XLSX.utils.json_to_sheet(dataToExport);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, dataType);
+  XLSX.writeFile(wb, fileName);
+};
+
+// Pastikan fungsi formatTanggalUntukExcel tersedia di sini
+const formatTanggalUntukExcel = (dateValue) => {
+  if (!dateValue) return '';
+
+  let dateToFormat;
+  if (typeof dateValue.toDate === 'function') {
+    dateToFormat = dateValue.toDate();
+  } else if (dateValue instanceof Date) {
+    dateToFormat = dateValue;
+  } else if (typeof dateValue === 'string') {
+    dateToFormat = new Date(dateValue);
+    if (isNaN(dateToFormat.getTime())) {
+      console.warn("Invalid date string for Excel export:", dateValue);
+      return dateValue;
+    }
+  } else {
+    return dateValue;
+  }
+
+  const day = String(dateToFormat.getDate()).padStart(2, '0');
+  const month = String(dateToFormat.getMonth() + 1).padStart(2, '0');
+  const year = dateToFormat.getFullYear();
+
+  return `${day}-${month}-${year}`;
+};
+
 // --- Fungsi Ekspor PDF (Menggunakan getPdfDoc) ---
 const exportToPdf = (dataType) => {
-const doc = new jsPDF();
-let headersPdf = [];
-let dataPdf = [];
-let title = '';
-let fileName = '';
+  const doc = new jsPDF();
+  let headersPdf = [];
+  let dataPdf = [];
+  let title = '';
+  let fileName = '';
 
-if (dataType === 'iuran') {
-title = 'Data Iuran';
-fileName = 'data_iuran.pdf';
-// Hanya ambil header yang relevan (tanpa 'Aksi') dan petakan ke judul
-headersPdf = headers.filter(h => h.key !== 'actions').map(h => h.title);
-// Petakan data sesuai urutan header yang diekspor
-dataPdf = iuran.value.map(item =>
-  headers.filter(h => h.key !== 'actions').map(h => item[h.key])
-);
-} else {
-alert("Tipe data tidak dikenal untuk ekspor PDF.");
-return;
-}
+  if (dataType === 'iuran') {
+    title = 'Data Iuran';
+    fileName = 'data_iuran_warga.pdf';
+    // Hanya ambil header yang relevan (tanpa 'Aksi') dan petakan ke judul
+    headersPdf = headers.filter(h => h.key !== 'actions').map(h => h.title);
 
-if (dataPdf.length === 0) {
-alert("Tidak ada data untuk diekspor.");
-return;
-}
+    // --- PERBAIKAN PENTING DI SINI ---
+    dataPdf = iuran.value.map(item => {
+      // Buat array untuk baris data ini
+      const rowData = [];
+      headers.filter(h => h.key !== 'actions').forEach(header => {
+        let value = item[header.key]; // Ambil nilai mentah
 
-doc.text(title, 14, 16); // Judul dokumen
+        // Jika header adalah 'tanggal', format ulang
+        if (header.key === 'tanggal') { // Asumsi ada header dengan key 'tanggal'
+          value = formatTanggalUntukPdf(value); // Gunakan fungsi pemformatan khusus PDF
+        };
+        // Tambahan: Jika ada kolom lain yang perlu diformat (misal: mata uang)
+         if (header.key === 'jumlah') {
+           value = formatRupiah(value); // Gunakan fungsi format Rupiah jika ada
+         }
 
-autoTable(doc, {
-head: [headersPdf],
-body: dataPdf,
-startY: 20
-});
+        rowData.push(value);
+      });
+      return rowData;
+    });
+    // --- AKHIR PERBAIKAN ---
 
-doc.save(fileName);
+  } else {
+    alert("Tipe data tidak dikenal untuk ekspor PDF.");
+    return;
+  }
+
+  if (dataPdf.length === 0) {
+    alert("Tidak ada data untuk diekspor.");
+    return;
+  }
+
+  doc.text(title, 14, 16); // Judul dokumen
+
+  autoTable(doc, {
+    head: [headersPdf],
+    body: dataPdf,
+    startY: 20
+  });
+
+  doc.save(fileName);
 };
-// --- Akhir Fungsi Ekspor ---
+
+// --- Fungsi Pemformatan Tanggal Khusus untuk PDF ---
+// Pastikan fungsi ini ada di dalam <script setup> atau diimpor
+const formatTanggalUntukPdf = (dateValue) => {
+  if (!dateValue) return '';
+
+  let dateToFormat;
+  // Jika ini adalah Firestore Timestamp
+  if (typeof dateValue.toDate === 'function') {
+    dateToFormat = dateValue.toDate();
+  }
+  // Jika sudah berupa objek Date JS
+  else if (dateValue instanceof Date) {
+    dateToFormat = dateValue;
+  }
+  // Jika masih berupa string (misal: "YYYY-MM-DD")
+  else if (typeof dateValue === 'string') {
+    dateToFormat = new Date(dateValue);
+    // Validasi apakah string tanggal bisa di-parse dengan benar
+    if (isNaN(dateToFormat.getTime())) {
+      console.warn("Invalid date string for PDF export:", dateValue);
+      return dateValue; // Kembalikan string asli jika tidak valid
+    }
+  }
+  else {
+    return dateValue; // Kembalikan nilai asli jika tipe tidak dikenal
+  }
+
+  // Format ke DD-MM-YYYY
+  const day = String(dateToFormat.getDate()).padStart(2, '0');
+  const month = String(dateToFormat.getMonth() + 1).padStart(2, '0'); // getMonth() is 0-indexed
+  const year = dateToFormat.getFullYear();
+
+  return `${day}-${month}-${year}`;
+};
+
+// Pastikan fungsi formatRupiah juga tersedia jika digunakan untuk ekspor lain
+// const formatRupiah = (amount) => { ... };
+
 
 const logout = async () => {
 try {
