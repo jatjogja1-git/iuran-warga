@@ -26,6 +26,9 @@ clearable
           item-key="id"
           class="elevation-1"
         >
+        <template v-slot:item.nomor="{ item }">
+         {{ item.nomor }}
+        </template>
           <template v-slot:item.actions="{ item }">
             <v-icon small class="mr-2" @click="openDialog('edit', item)">
               mdi-pencil
@@ -34,6 +37,12 @@ clearable
               mdi-delete
             </v-icon>
           </template>
+          <template v-slot:item.status="{ item }">
+    <v-chip :color="item.status === 'Aktif' ? 'green' : 'red'" dark>
+      {{ item.status }}
+    </v-chip>
+  </template>
+
         </v-data-table>
       </v-card-text>
     </v-card>
@@ -114,6 +123,7 @@ const headers = [
 
 // --- Headers untuk v-data-table ---
 const headers = [
+{ title: 'No', key: 'nomor', sortable: false },
 { title: 'Nama Warga', key: 'nama', searchable: true }, // <<< Tambahkan ini
 { title: 'Alamat', key: 'alamat', searchable: true },   // <<< Tambahkan ini
 { title: 'Nomor Rumah', key: 'noRumah', searchable: true }, // <<< Tambahkan ini
@@ -123,6 +133,7 @@ const headers = [
 
 const formTitle = computed(() => (dialogMode.value === 'add' ? 'Tambah' : 'Edit'));
 
+/*
 // src/views/WargaPage.vue - dalam fungsi fetchWarga
 const fetchWarga = async () => {
 const querySnapshot = await getDocs(collection(db, 'warga'));
@@ -131,6 +142,27 @@ warga.value = querySnapshot.docs.map(doc => ({
 id: doc.id, // Ini adalah properti krusial yang harus ada
 ...doc.data()
 }));
+};
+*/
+
+const fetchWarga = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'warga'));
+    const fetchedWarga = [];
+    let counter = 1; // Inisialisasi counter
+
+    querySnapshot.docs.forEach(doc => {
+      fetchedWarga.push({
+        id: doc.id,
+        ...doc.data(),
+        nomor: counter++ // Tambahkan nomor urut
+      });
+    });
+    warga.value = fetchedWarga;
+    console.log('Data Warga dengan nomor urut:', warga.value); // Untuk debugging
+  } catch (error) {
+    console.error('Error fetching warga:', error);
+  }
 };
 
 // src/views/WargaPage.vue - dalam fungsi openDialog

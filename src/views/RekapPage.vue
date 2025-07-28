@@ -43,6 +43,10 @@ clearable
           item-key="namaWarga"
           class="elevation-1"
         >
+        <template v-slot:item.nomor="{ item }">
+         {{ item.nomor }}
+        </template>
+
           <template v-slot:item.totalIuran="{ item }">
             {{ formatRupiah(item.totalIuran) }}
           </template>
@@ -105,6 +109,7 @@ return yearsArray;
 });
 
 const headers = [
+{ title: 'No', key: 'nomor', sortable: false },
 { title: 'Nama Warga', key: 'namaWarga' },
 { title: 'Total Iuran', key: 'totalIuran' }
 ];
@@ -158,7 +163,20 @@ if (rekap[iuranItem.wargaId]) {
 }
 });
 
-rekapData.value = Object.values(rekap);
+// --- PERBAIKAN PENTING DI SINI ---
+const finalRekapData = Object.values(rekap);
+  let counter = 1; // Inisialisasi counter
+
+  // Tambahkan nomor urut ke setiap item rekap
+  rekapData.value = finalRekapData.map(item => ({
+    ...item,
+    nomor: counter++
+  }));
+  // --- AKHIR PERBAIKAN ---
+
+//rekapData.value = Object.values(rekap);
+console.log('Final Rekap Data dengan nomor urut:', rekapData.value); // Untuk debugging
+
 };
 
 const formatRupiah = (amount) => {
