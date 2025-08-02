@@ -212,6 +212,10 @@ XLSX.utils.book_append_sheet(wb, ws, dataType);
 XLSX.writeFile(wb, fileName);
 };
 
+
+
+//eksport to pdf
+
 const exportToPdf = (dataType) => {
 const doc = new jsPDF();
 let headersPdf = [];
@@ -222,7 +226,8 @@ let fileName = '';
 if (dataType === 'rekap') {
 title = `Rekap Iuran Bulanan (${months.find(m => m.value === selectedMonth.value)?.text} ${selectedYear.value})`;
 fileName = `rekap_iuran_${months.find(m => m.value === selectedMonth.value)?.text}_${selectedYear.value}.pdf`;
-headersPdf = ['Nama Warga', 'Total Iuran'];
+/*
+headersPdf = ['No', 'Nama Warga', 'Total Iuran'];
 dataPdf = rekapData.value.map(item => [
   item.namaWarga,
   formatRupiah(item.totalIuran)
@@ -233,7 +238,52 @@ if (dataPdf.length === 0) {
 alert("Tidak ada data untuk diekspor.");
 return;
 }
+*/
+// Hanya ambil header yang relevan (tanpa 'Aksi') dan petakan ke judul
+headersPdf = headers.filter(h => h.key !== 'actions').map(h => h.title);
+// Petakan data sesuai urutan header yang diekspor
 
+/*
+dataPdf = rekapData.value.map(item =>
+  headers.filter(h => h.key !== 'actions').map(h => item[h.key])
+);
+} 
+else {
+alert("Tipe data tidak dikenal untuk ekspor PDF.");
+return;
+}
+*/
+
+dataPdf = rekapData.value.map(item => {
+      // Buat array untuk baris data ini
+      const rowData = [];
+      headers.filter(h => h.key !== 'actions').forEach(header => {
+        let value = item[header.key]; // Ambil nilai mentah
+
+        // Jika header adalah 'tanggal', format ulang
+        if (header.key === 'tanggal') { // Asumsi ada header dengan key 'tanggal'
+          value = formatTanggalUntukPdf(value); // Gunakan fungsi pemformatan khusus PDF
+        };
+        // Tambahan: Jika ada kolom lain yang perlu diformat (misal: mata uang)
+         if (header.key === 'totalIuran') {
+           value = formatRupiah(value); // Gunakan fungsi format Rupiah jika ada
+         }
+
+        rowData.push(value);
+      });
+      return rowData;
+    });
+    // --- AKHIR PERBAIKAN ---
+
+  } else {
+    alert("Tipe data tidak dikenal untuk ekspor PDF.");
+    return;
+  }
+
+if (dataPdf.length === 0) {
+alert("Tidak ada data untuk diekspor.");
+return;
+}
 doc.text(title, 14, 16);
 
 autoTable(doc, {
@@ -248,6 +298,7 @@ foot: [
 doc.save(fileName);
 };
 // --- Akhir Fungsi Ekspor ---
+
 
 const logout = async () => {
 try {
