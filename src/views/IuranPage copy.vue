@@ -10,28 +10,6 @@
       </v-card-title>
       <v-card-text>
 
-
-<v-row>
-  <v-col cols="12" md="4">
-    <v-text-field
-      v-model="startDate"
-      type="date"
-      label="Tanggal Mulai"
-      clearable
-    />
-  </v-col>
-
-  <v-col cols="12" md="4">
-    <v-text-field
-      v-model="endDate"
-      type="date"
-      label="Tanggal Akhir"
-      :error-messages="tanggalError"
-      clearable
-    />
-  </v-col>
-</v-row>
-
 <v-col cols="12" md="4">
 <v-text-field
 v-model="search"
@@ -40,24 +18,14 @@ prepend-inner-icon="mdi-magnify"
 clearable
 /></v-col>
 
-<v-alert type="info" class="mt-4">
-  Total Iuran: {{ totalIuran.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }) }}
-</v-alert>
-
         <v-data-table
-        :headers="headers"
-        :items="filteredIuran"
-        :search="search"
-        :items-per-page="10"
-        item-key="id"
-        class="elevation-1"
-        show-current-page
-        :page.sync="page"
->
-<template v-slot:item.no="{ index }">
-    {{ (page - 1) * 10 + index + 1 }}
-  </template>
-
+          :headers="headers"
+          :items="iuran"
+          :search="search"
+          item-key="id"
+          class="elevation-1"
+          
+        >
           <template v-slot:item.tanggal="{ item }">
           {{ formatDate(item.tanggalObj) }}
           </template>
@@ -133,7 +101,6 @@ clearable
 </template>
 
 <script setup>
-import { computed } from 'vue';
 import { ref, onMounted } from 'vue';
 import { db, auth } from '../firebase/config';
 import { collection, getDocs, addDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
@@ -150,10 +117,7 @@ import { getPdfDoc } from '../plugins/pdf'; // <<< IMPOR FUNGSI PEMBUAT DOC PDF
 
 // Variabel pencarian
 const search = ref(''); // <<< Pastikan ini dideklarasikan
-const page = ref(1);
-//const page = ref(1); // Tambahkan ini di script setup
 
-//const totalPages = computed(() => Math.ceil(iuran.value.length / 10));
 
 //const drawer = ref(false);
 //const router = useRouter();
@@ -161,28 +125,6 @@ const iuran = ref([]);
 const wargaList = ref([]); // Untuk dropdown warga
 const dialog = ref(false);
 const tanggalMenu = ref(false);
-
-
-const startDate = ref('');
-const endDate = ref('');
-
-const filteredIuran = computed(() => {
-  // Jika kedua tanggal kosong, tampilkan semua data
-  if (!startDate.value && !endDate.value) return iuran.value;
-
-  return iuran.value.filter(item => {
-    const itemDate = new Date(item.tanggalObj).setHours(0, 0, 0, 0); // Normalisasi ke tengah malam
-    const start = startDate.value ? new Date(startDate.value).setHours(0, 0, 0, 0) : null;
-    const end = endDate.value ? new Date(endDate.value).setHours(0, 0, 0, 0) : null;
-
-    if (start && end) return itemDate >= start && itemDate <= end;
-    if (start) return itemDate >= start;
-    if (end) return itemDate <= end;
-
-    return true;
-  });
-});
-
 
 /*
 const today = new Date(); // Membuat objek tanggal saat ini
@@ -201,9 +143,6 @@ jumlah: 0,
 tanggalObj: new Date() // Inisialisasi dengan objek Date hari ini
 });
 
-const totalIuran = computed(() => {
-  return filteredIuran.value.reduce((acc, item) => acc + item.jumlah, 0);
-});
 
 /*
 // Fungsi helper untuk menampilkan tanggal dari objek Date
@@ -241,17 +180,8 @@ const formatDateDisplay = (dateObj) => {
 };
 
 
-const tanggalError = computed(() => {
-  if (!startDate.value || !endDate.value) return '';
-  if (new Date(endDate.value) < new Date(startDate.value)) {
-    return 'Tanggal akhir tidak boleh lebih kecil dari tanggal mulai.';
-  }
-  return '';
-});
-
 // --- Headers untuk v-data-table ---
 const headers = [
-{ title: 'No', key: 'no', sortable: false },  
 { title: 'Nama Warga', key: 'namaWarga', searchable: true }, // <<< Tambahkan ini
 { title: 'Tanggal', key: 'tanggal', searchable: true },
 { title: 'Jumlah', key: 'jumlah', searchable: true },
@@ -703,40 +633,14 @@ const exportToPdf = (dataType) => {
 
   doc.text(title, 14, 16); // Judul dokumen
 
-  /*
   autoTable(doc, {
     head: [headersPdf],
     body: dataPdf,
     startY: 20
   });
-*/
-
-autoTable(doc, {
-  head: [['No', 'Nama Warga', 'Tanggal', 'Jumlah']],
-  startY: 20,
-  body: iuran.value.map((item, index) => [
-    index + 1, // Nomor urut
-    item.namaWarga,
-    formatDate(item.tanggalObj),
-    formatRupiah(item.jumlah)
-  ]),
-  didDrawPage: function (data) {
-    const pageCount = doc.internal.getNumberOfPages();
-    const pageSize = doc.internal.pageSize;
-    const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
-
-    doc.setFontSize(10);
-    doc.text(
-      `Halaman ${doc.internal.getCurrentPageInfo().pageNumber} dari ${pageCount}`,
-      data.settings.margin.left,
-      pageHeight - 10
-    );
-  }
-});
 
   doc.save(fileName);
 };
-
 
 // --- Fungsi Pemformatan Tanggal Khusus untuk PDF ---
 // Pastikan fungsi ini ada di dalam <script setup> atau diimpor
