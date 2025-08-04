@@ -6,7 +6,9 @@
         <v-spacer></v-spacer>
         <v-btn color="primary" @click="openDialog('add')">Tambah Iuran</v-btn>
         <v-btn color="success" @click="exportToExcel('iuran')">Ekspor Excel</v-btn>
-        <v-btn color="red" @click="exportToPdf('iuran')" class="ml-2">Ekspor PDF</v-btn>
+<!--        <v-btn color="red" @click="exportToPdf('iuran')" class="ml-2">Ekspor Total Iuran ke PDF</v-btn>-->
+<!--    <v-btn color="red darken-1" @click="exportFilteredIuranToPdf">Ekspor Iuran per Tanggal PDF</v-btn>-->
+        <v-btn color="red darken-3" @click="exportFilteredIuranByWargaToPdf">Ekspor Iuran per Tanggal PDF</v-btn>
       </v-card-title>
       <v-card-text>
 
@@ -39,6 +41,7 @@ label="Cari iuran warga..."
 prepend-inner-icon="mdi-magnify"
 clearable
 /></v-col>
+
 
 <v-alert type="info" class="mt-4">
   Total Iuran: {{ totalIuran.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }) }}
@@ -736,6 +739,135 @@ autoTable(doc, {
 
   doc.save(fileName);
 };
+
+
+
+// Ekspor pdf rentang tanggal
+
+const exportFilteredIuranToPdf = () => {
+  const doc = new jsPDF();
+  doc.text('Laporan Iuran Berdasarkan Tanggal', 14, 16);
+
+  const tableData = filteredIuran.value.map((item, index) => [
+    index + 1,
+    wargaList.value.find(w => w.id === item.wargaId)?.nama || 'Tidak Diketahui',
+    formatDate(item.tanggalObj),
+    formatRupiah(item.jumlah),
+  ]);
+
+  autoTable(doc, {
+    head: [['No', 'Nama Warga', 'Tanggal', 'Jumlah']],
+    body: tableData,
+    startY: 20,
+  });
+
+  const start = startDate.value || 'awal';
+  const end = endDate.value || 'akhir';
+  doc.save(`iuran_${start}_to_${end}.pdf`);
+};
+
+
+
+//--Eksport pd rentang tanggal dan warga
+/*
+const exportFilteredIuranByWargaToPdf = () => {
+  const doc = new jsPDF();
+  doc.text('Laporan Iuran Warga Berdasarkan Filter', 14, 16);
+
+  // Ambil data yang lolos filter tanggal & nama warga
+  const data = filteredIuran.value.filter(item => {
+    const wargaNama = wargaList.value.find(w => w.id === item.wargaId)?.nama.toLowerCase() || '';
+    return wargaNama.includes(search.value.toLowerCase());
+  });
+
+  const tableData = data.map((item, index) => [
+    index + 1,
+    wargaList.value.find(w => w.id === item.wargaId)?.nama || 'Tidak Diketahui',
+    formatDate(item.tanggalObj),
+    formatRupiah(item.jumlah),
+  ]);
+
+  autoTable(doc, {
+    head: [['No', 'Nama Warga', 'Tanggal', 'Jumlah']],
+    body: tableData,
+    startY: 20,
+  });
+
+  const start = startDate.value || 'awal';
+  const end = endDate.value || 'akhir';
+  const searchKeyword = search.value || 'semua_warga';
+  doc.save(`iuran_${searchKeyword}_${start}_to_${end}.pdf`);
+};
+*/
+
+const exportFilteredIuranByWargaToPdf = () => {
+  const doc = new jsPDF();
+  doc.text('Laporan Iuran Warga Berdasarkan Filter', 14, 16);
+
+  const data = filteredIuran.value.filter(item => {
+    const wargaNama = wargaList.value.find(w => w.id === item.wargaId)?.nama.toLowerCase() || '';
+    return wargaNama.includes(search.value.toLowerCase());
+  });
+
+  const tableData = data.map((item, index) => [
+    index + 1,
+    wargaList.value.find(w => w.id === item.wargaId)?.nama || 'Tidak Diketahui',
+    formatDate(item.tanggalObj),
+    formatRupiah(item.jumlah),
+  ]);
+
+
+  // Hitung total iuran yang sudah difilter
+  const totalIuran = data.reduce((sum, item) => sum + item.jumlah, 0);
+
+
+  autoTable(doc, {
+    head: [['No', 'Nama Warga', 'Tanggal', 'Jumlah']],
+    body: tableData,
+    startY: 20,
+    foot: [
+//  ['', `Total Iuran Bulan Ini: ${formatRupiah(totalIuran)}`]
+  ['', `Total Iuran: ${formatDate(startDate.value)} s.d ${formatDate(endDate.value)}: ${formatRupiah(totalIuran)}`]
+]
+  });
+
+
+ 
+// Buat teks footer di bawah tabel
+
+const footerY = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(12);
+
+  /*
+  doc.text(
+    `Total Iuran (${formatDate(startDate.value)} s.d ${formatDate(endDate.value)}): ${formatRupiah(totalIuran)}`,
+    14,
+    footerY
+  );
+*/
+
+// Set warna latar (misalnya abu-abu terang)
+//doc.setFillColor(230, 230, 230); // RGB
+//doc.rect(10, footerY - 5, 190, 10, 'F'); // X, Y, Width, Height, 'F' = fill
+
+
+//doc.setTextColor(60, 60, 60); // warna teks abu tua
+/*
+doc.text(
+  `Total Iuran (${formatDate(startDate.value)} s.d ${formatDate(endDate.value)}): ${formatRupiah(totalIuran)}`,
+  14,
+  footerY
+);
+*/
+
+  // Buat nama file berdasarkan tanggal dan pencarian
+  const start = startDate.value ? formatDate(startDate.value).replaceAll('/', '-') : 'awal';
+  const end = endDate.value ? formatDate(endDate.value).replaceAll('/', '-') : 'akhir';
+  const keyword = search.value?.toLowerCase().replaceAll(' ', '_') || 'semua_warga';
+
+  doc.save(`iuran_${keyword}_${start}_to_${end}_total_${totalIuran}.pdf`);
+};
+
 
 
 // --- Fungsi Pemformatan Tanggal Khusus untuk PDF ---
