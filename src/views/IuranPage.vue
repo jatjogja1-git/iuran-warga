@@ -169,6 +169,33 @@ const tanggalMenu = ref(false);
 const startDate = ref('');
 const endDate = ref('');
 
+
+// Pastikan Anda mengimpor 'query' dan 'orderBy'
+// Anggap variabel wargaList sudah dideklarasikan
+//const wargaList = ref([]);
+
+const fetchWargaList = async () => {
+  try {
+    // 1. Buat kueri dengan pengurutan
+    // Mengurutkan berdasarkan 'createdAt' secara ascending (dari terlama ke terbaru)
+    const q = query(collection(db, 'wargart'), orderBy('createdAt', 'asc'));
+
+    const querySnapshot = await getDocs(q);
+
+    // 2. Petakan hasil kueri ke dalam array wargaList
+    wargaList.value = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      nama: doc.data().nama,
+      // ... properti lain jika diperlukan
+    }));
+
+    console.log('Daftar warga yang terurut:', wargaList.value);
+
+  } catch (error) {
+    console.error("Error fetching sorted warga list:", error);
+  }
+};
+
 const filteredIuran = computed(() => {
   // Jika kedua tanggal kosong, tampilkan semua data
   if (!startDate.value && !endDate.value) return iuran.value;
@@ -261,11 +288,12 @@ const headers = [
 { title: 'Aksi', key: 'actions', sortable: false, searchable: false }
 ];
 
+/*
 const fetchWargaList = async () => {
-const querySnapshot = await getDocs(collection(db, 'warga'));
+const querySnapshot = await getDocs(collection(db, 'wargart'));
 wargaList.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
-
+*/
 
 
 // Modifikasi fetchIuran untuk menangani Timestamp
@@ -585,7 +613,9 @@ const exportToExcel = (dataType) => {
 };
 */
 
-// --- Fungsi Ekspor ---
+
+
+// --- Fungsi Ekspor --- sdh jalan ok
 const exportToExcel = (dataType) => {
   let dataToExport = [];
   let fileName = '';
@@ -608,10 +638,11 @@ const exportToExcel = (dataType) => {
       };
 
       if (newItem.jumlah) {
-        newItem.jumlah = formatRupiah(newItem.jumlah); //hilangkan ini jika ingin di kolom excel di Sum
+//        newItem.jumlah = formatRupiah(newItem.jumlah); //hilangkan ini jika ingin di kolom excel di Sum
+        newItem.jumlah = (newItem.jumlah); //hilangkan ini jika ingin di kolom excel di Sum
+
       };
 
-      
       // Anda juga bisa mengganti nama properti jika diperlukan untuk header Excel yang lebih baik
       // Misalnya: newItem['Nama Warga'] = newItem.namaWarga; delete newItem.namaWarga;
 
@@ -657,6 +688,8 @@ const formatTanggalUntukExcel = (dateValue) => {
 
   return `${day}-${month}-${year}`;
 };
+
+
 
 // --- Fungsi Ekspor PDF (Menggunakan getPdfDoc) ---
 const exportToPdf = (dataType) => {

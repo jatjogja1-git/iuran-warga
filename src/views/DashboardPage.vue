@@ -30,7 +30,7 @@ const totalIuranBulanIni = ref(0);
 const fetchDashboardStats = async () => {
   // 1. Ambil Total Warga
   try {
-    const wargaSnapshot = await getDocs(collection(db, 'warga'));
+    const wargaSnapshot = await getDocs(collection(db, 'wargart'));
     totalWarga.value = wargaSnapshot.size; // Jumlah dokumen dalam koleksi 'warga'
   } catch (error) {
     console.error("Error fetching total warga:", error);

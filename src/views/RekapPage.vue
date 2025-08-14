@@ -62,7 +62,8 @@ clearable
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { db, auth } from '../firebase/config';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
+
 import { useRouter } from 'vue-router';
 import { signOut } from 'firebase/auth';
 
@@ -118,9 +119,31 @@ const totalIuranBulanan = computed(() => {
 return rekapData.value.reduce((sum, item) => sum + item.totalIuran, 0);
 });
 
+/* ini sudah jalan
 const fetchWargaList = async () => {
-const querySnapshot = await getDocs(collection(db, 'warga'));
+const querySnapshot = await getDocs(collection(db, 'wargart'));
 wargaList.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+*/
+
+
+const fetchWargaList = async () => {
+    try {
+        // Buat kueri yang mengurutkan berdasarkan 'createdAt' secara ascending
+        const q = query(collection(db, 'wargart'), orderBy('createdAt', 'asc'));
+
+        const querySnapshot = await getDocs(q);
+
+        // Petakan data ke dalam array wargaList.value
+        wargaList.value = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        console.log('Warga list sorted by createdAt:', wargaList.value);
+    } catch (error) {
+        console.error("Error fetching sorted warga list:", error);
+    }
 };
 
 const fetchRekap = async () => {
@@ -150,9 +173,9 @@ const fetchRekap = async () => {
   console.log('Iuran ditemukan untuk bulan ini:', iuranBulanIni); // Untuk debugging
 
 const rekap = {};
-wargaList.value.forEach(warga => {
-rekap[warga.id] = {
-  namaWarga: warga.nama,
+wargaList.value.forEach(wargart => {
+rekap[wargart.id] = {
+  namaWarga: wargart.nama,
   totalIuran: 0
 };
 });
@@ -195,6 +218,7 @@ let fileName = '';
 
 if (dataType === 'rekap') {
 dataToExport = rekapData.value.map(item => ({
+  'Nomor': item.nomor,
   'Nama Warga': item.namaWarga,
   'Total Iuran': item.totalIuran // Biarkan angka untuk perhitungan di Excel
 }));
@@ -211,7 +235,6 @@ const wb = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb, ws, dataType);
 XLSX.writeFile(wb, fileName);
 };
-
 
 
 //eksport to pdf
