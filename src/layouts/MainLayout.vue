@@ -28,6 +28,14 @@
           </template>
           <v-list-item-title>Iuran Harian</v-list-item-title>
         </v-list-item>
+
+        <v-list-item link to="/rekaptgl">
+          <template v-slot:prepend>
+            <v-icon>mdi-chart-bar</v-icon>
+          </template>
+          <v-list-item-title>Rekap Per Tanggal</v-list-item-title>
+        </v-list-item>
+
         <v-list-item link to="/rekap">
           <template v-slot:prepend>
             <v-icon>mdi-chart-bar</v-icon>

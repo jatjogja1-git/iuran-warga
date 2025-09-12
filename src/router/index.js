@@ -8,6 +8,7 @@ import DashboardPage from '../views/DashboardPage.vue';
 import WargaPage from '../views/WargaPage.vue';
 import IuranPage from '../views/IuranPage.vue';
 import RekapPage from '../views/RekapPage.vue';
+import RekapPageTgl from '../views/RekapPageTgl.vue';
 import { auth } from '../firebase/config';
 
 const routes = [
@@ -40,6 +41,13 @@ const routes = [
         component: IuranPage,
         meta: { requiresAuth: true, title: 'Iuran Harian' } // Tambahkan meta title
       },
+      {
+        path: 'rekaptgl', // path akan menjadi /rekap
+        name: 'Rekaptgl',
+        component: RekapPageTgl,
+        meta: { requiresAuth: true, title: 'Rekap Per Tanggal' } // Tambahkan meta title
+      },
+
       {
         path: 'rekap', // path akan menjadi /rekap
         name: 'Rekap',

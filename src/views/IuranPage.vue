@@ -166,8 +166,11 @@ const dialog = ref(false);
 const tanggalMenu = ref(false);
 
 
-const startDate = ref('');
-const endDate = ref('');
+//const startDate = ref('');
+//const endDate = ref('');
+
+const startDate = ref(new Date().toISOString().substring(0, 10)); // Format YYYY-MM-DD
+const endDate = ref(new Date().toISOString().substring(0, 10));
 
 
 // Pastikan Anda mengimpor 'query' dan 'orderBy'
