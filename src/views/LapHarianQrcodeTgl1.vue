@@ -527,49 +527,51 @@ const generatePdfLaporanHistori = () => {
     ];
 
    // Map data rekap ke array tabel
-    const bodyData = rekapHistori.value.map((item, index) => {
-      const statusPembayaran = item.totalIuran >= 15000 ? 'LUNAS' : 'BELUM LUNAS';
-      const validationCode = `RT-VAL-HIST-${item.wargaId}-${startDate.value.replace(/-/g, '')}`;
-/*
-      const qrTextContent = `BUKTI DIGITAL HISTORI IURAN RT
-ID: ${validationCode}
-Nama Warga: ${item.namaWarga}
-Periode: ${formatTanggalIndo(startDate.value)} s.d. ${formatTanggalIndo(endDate.value)}
-Total Pembayaran: ${formatRupiah(item.totalIuran)}
-Status: ${statusPembayaran}`;
-*/
+   const bodyData = rekapHistori.value.map((item, index) => {
+  // 1. Ambil semua histori pembayaran warga ini yang berada di dalam rentang tanggal pilihan
+  const historiSesuaiPeriode = item.histori.filter(h => {
+    // Ubah timestamp Firestore ke objek Date bawaan JavaScript
+    const tglBayar = h.tanggal.toDate ? h.tanggal.toDate() : new Date(h.tanggal);
+    
+    const batasAwal = new Date(startDate.value);
+    batasAwal.setHours(0,0,0,0);
+    
+    const batasAkhir = new Date(endDate.value);
+    batasAkhir.setHours(23,59,59,999);
+    
+    return tglBayar >= batasAwal && tglBayar <= batasAkhir;
+  });
 
-// --- PERBAIKAN 1: UBAH ISI QR MENJADI URL LINK PENDEK & DINAMIS ---
-      // Teks dibuat seminimal mungkin agar kotak QR renggang dan sangat mudah di-scan kamera HP
-      // Gabungkan domain Vercel Anda dengan parameter data yang dinamis
-const domainVercel = "https://iuran-warga-five.vercel.app"; //ini jika untuk versi jadi
-//const domainVercel = "http://192.168.4.140:5199"; //ini untuk local
-const qrTextContent = `${domainVercel}/verify-kuitansi?wargaId=${item.wargaId}&start=${startDate.value}&end=${endDate.value}`;
+  // 2. Hitung total akumulasi khusus untuk periode bulan yang dipilih tersebut
+  const totalIuranPeriodeIni = historiSesuaiPeriode.reduce((sum, h) => sum + h.jumlah, 0);
 
+  // 3. Tentukan status kelunasan secara konsisten berdasarkan total akumulasi periode tersebut
+  // JANGAN gunakan item.totalIuran global jika nilainya tidak ter-update otomatis oleh filter tanggal Vue
+  const statusPembayaran = totalIuranPeriodeIni >= 15000 ? 'LUNAS' : 'BELUM LUNAS';
 
-      let qrBase64 = null;
-      if (window.QRious) {
-        const qrInstance = new window.QRious({
-          value: qrTextContent,
-         // size: 300,  // PERBAIKAN: Naikkan resolusi dasar agar kotak QR tajam di PDF
-         // level: 'H', // PERBAIKAN: Ubah ke High (toleransi distorsi kamera s.d 30%)
-         // padding: 4  // PERBAIKAN: Beri batas aman/quiet zone agar sensor HP fokus
-          size: 200,   // Resolusi canvas 200 sudah sangat tajam karena teksnya pendek
-          level: 'M',  // Menggunakan level Medium agar pola kotak QR bersih dan renggang
-          padding: 0   // Tanpa padding bawaan karena margin akan diatur oleh koordinat sel tabel
-        });
-        qrBase64 = qrInstance.toDataURL('image/png');
-      }
+  const validationCode = `RT-VAL-HIST-${item.wargaId}-${startDate.value.replace(/-/g, '')}`;
+  const qrTextContent = `https://iuran-warga-five.vercel.app/verify-kuitansi?wargaId=${item.wargaId}&start=${startDate.value}&end=${endDate.value}`;
 
-      return {
-        no: index + 1,
-        namaWarga: item.namaWarga,
-        transaksi: `${item.histori.length} kali bayar`,
-        status: statusPembayaran,
-        jumlah: formatRupiah(item.totalIuran),
-        qrcode: qrBase64 // Menyimpan data gambar Base64
-      };
+  let qrBase64 = null;
+  if (window.QRious) {
+    const qrInstance = new window.QRious({
+      value: qrTextContent,
+      size: 200,
+      level: 'M',
+      padding: 0
     });
+    qrBase64 = qrInstance.toDataURL('image/png');
+  }
+
+  return {
+    no: index + 1,
+    namaWarga: item.namaWarga || item.nama,
+    transaksi: `${historiSesuaiPeriode.length} kali bayar`,
+    status: statusPembayaran, // Sekarang status ini dijamin 100% sama dengan hasil scan QR Code
+    jumlah: formatRupiah(totalIuranPeriodeIni),
+    qrcode: qrBase64
+  };
+});
 
     // Jalankan Autotable
     autoTable(doc, {
