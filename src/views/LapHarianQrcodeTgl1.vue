@@ -872,6 +872,8 @@ Status: ${statusPembayaran}`;
 //coba cara baru
 // ISI QR CODE DIGANTI MENJADI LINK PENDEK (Sangat Mudah Dibaca Kamera)
 //const qrTextContent = `http://192.168.4.140:5199/verify-kuitansi?wargaId=${item.wargaId}&start=${startDate.value}&end=${endDate.value}`;  //untuk localhost
+
+/*
 const qrTextContent = `https://iuran-warga-five.vercel.app/verify-kuitansi?wargaId=${item.wargaId}&start=${startDate.value}&end=${endDate.value}`;
 
 let qrBase64 = null;
@@ -884,6 +886,7 @@ if (window.QRious) {
   });
   qrBase64 = qrInstance.toDataURL('image/png');
 }
+*/
 
 //  wargaId=${item.wargaId}&start=${startDate.value}&end=${endDate.value}&status=${statusPembayaran}
 
