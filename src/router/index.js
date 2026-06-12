@@ -9,6 +9,10 @@ import WargaPage from '../views/WargaPage.vue';
 import IuranPage from '../views/IuranPage.vue';
 import RekapPage from '../views/RekapPage.vue';
 import RekapPageTgl from '../views/RekapPageTgl.vue';
+import LapHarianQrcode from '../views/LapHarianQrcode.vue';
+import LapHarianQrcodeTgl1 from '../views/LapHarianQrcodeTgl1.vue';
+import VerifyKuitansi from '../views/VerifyKuitansi.vue'; // Import halaman baru
+
 import { auth } from '../firebase/config';
 
 const routes = [
@@ -19,6 +23,15 @@ const routes = [
 //    component: Login,
     meta: { title: 'Login' } // Tambahkan meta title
   },
+
+// TAMBAHKAN RUTE PUBLIK INI DI SINI
+{
+  path: '/verify-kuitansi',
+  name: 'VerifyKuitansi',
+  component: VerifyKuitansi,
+  meta: { title: 'Verifikasi Kuitansi Digital' } // Tanpa requiresAuth!
+},
+
   {
     path: '/', // Rute induk untuk layout
     component: MainLayout, // Komponen layout utama
@@ -53,7 +66,20 @@ const routes = [
         name: 'Rekap',
         component: RekapPage,
         meta: { requiresAuth: true, title: 'Rekap Bulanan' } // Tambahkan meta title
+      },
+      {
+        path: 'lapharqr', // path akan menjadi /rekap
+        name: 'LapHarQr',
+        component: LapHarianQrcode,
+        meta: { requiresAuth: true, title: 'Laporan Iuran Warga Qrcode' } // Tambahkan meta title
+      },
+      {
+        path: 'lapharqrtgl', // path akan menjadi /rekap
+        name: 'LapHarQrTgl',
+        component: LapHarianQrcodeTgl1,
+        meta: { requiresAuth: true, title: 'Laporan Iuran Warga Qrcode Periode' } // Tambahkan meta title
       }
+
     ]
   }
 ];

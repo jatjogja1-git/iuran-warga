@@ -42,9 +42,22 @@
           </template>
           <v-list-item-title>Rekap Bulanan</v-list-item-title>
         </v-list-item>
+
+        <v-list-item link to="/lapharqr">
+          <template v-slot:prepend>
+            <v-icon>mdi-chart-bar</v-icon>
+          </template>
+          <v-list-item-title>Laporan Iuran Warga Qrcode</v-list-item-title>
+        </v-list-item>
+
+        <v-list-item link to="/lapharqrtgl">
+          <template v-slot:prepend>
+            <v-icon>mdi-chart-bar</v-icon>
+          </template>
+          <v-list-item-title>Laporan Iuran Warga Qrcode Periode</v-list-item-title>
+        </v-list-item>
       </v-list>
     </v-navigation-drawer>
-
     <v-main>
       <router-view /> </v-main>
   </v-app>
