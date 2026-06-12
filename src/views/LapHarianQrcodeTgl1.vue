@@ -103,12 +103,11 @@
   
           <!-- Format Kolom Status Pembayaran -->
           <template v-slot:item.status="{ item }">
-            <v-chip
-              :color="item.totalIuran >= 15000 ? 'success' : 'grey'"
-              size="small"
-              class="text-uppercase font-weight-bold"
+            <v-chip 
+              :color="item.totalIuran >= 15000 ? 'success' : 'warning'"
+              class="font-weight-bold text-white"
             >
-              {{ item.totalIuran > 15000 ? 'LUNAS' : 'BELUM LUNAS' }}
+              {{ item.totalIuran >= 15000 ? 'LUNAS' : 'BELUM LUNAS' }}
             </v-chip>
           </template>
   
