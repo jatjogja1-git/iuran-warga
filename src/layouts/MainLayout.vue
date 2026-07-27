@@ -43,19 +43,45 @@
           <v-list-item-title>Rekap Bulanan</v-list-item-title>
         </v-list-item>
 
-        <v-list-item link to="/lapharqr">
-          <template v-slot:prepend>
-            <v-icon>mdi-chart-bar</v-icon>
-          </template>
-          <v-list-item-title>Laporan Iuran Warga Qrcode</v-list-item-title>
-        </v-list-item>
-
         <v-list-item link to="/lapharqrtgl">
           <template v-slot:prepend>
             <v-icon>mdi-chart-bar</v-icon>
           </template>
           <v-list-item-title>Laporan Iuran Warga Qrcode Periode</v-list-item-title>
         </v-list-item>
+
+         <v-list-item link to="/datblmbayarpbbview">
+          <template v-slot:prepend>
+            <v-icon>mdi-chart-bar</v-icon>
+          </template>
+          <v-list-item-title>Data Belum Bayar PBB Warga</v-list-item-title>
+        </v-list-item>
+
+
+        <v-list-item link to="/iuranpbbfixapi">
+          <template v-slot:prepend>
+            <v-icon>mdi-chart-bar</v-icon>
+          </template>
+          <v-list-item-title>Iuran PBB Warga Via Api</v-list-item-title>
+        </v-list-item>
+
+        <v-list-item link to="/datblmbayarpbbjsonview">
+          <template v-slot:prepend>
+            <v-icon>mdi-chart-bar</v-icon>
+          </template>
+          <v-list-item-title>Rekon Iuran PBB Warga</v-list-item-title>
+        </v-list-item>
+
+
+        <v-list-item link to="/lapHarianqrcodetgljsonfix">
+          <template v-slot:prepend>
+            <v-icon>mdi-chart-bar</v-icon>
+          </template>
+          <v-list-item-title>Laporan Iuran PBB Warga</v-list-item-title>
+        </v-list-item>
+
+
+
       </v-list>
     </v-navigation-drawer>
     <v-main>
