@@ -991,7 +991,11 @@ const generatePdfLaporanHistori = () => {
         rincianHistoriText += `\n   • Belum ada transaksi pada rentang ini.`;
       }
 
-      const qrTextContent = `http://192.168.4.140:5199/verify-kuitansi-pbb?NOP=${item.NOP}&start=${startDate.value}&end=${endDate.value}&status=${statusPembayaran}&bayar=${sudahDibayar}&target=${targetTagihan}`;
+//      const qrTextContent = `http://192.168.4.140:5199/verify-kuitansi-pbb?NOP=${item.NOP}&start=${startDate.value}&end=${endDate.value}&status=${statusPembayaran}&bayar=${sudahDibayar}&target=${targetTagihan}`;
+      const qrTextContent = `https://iuran-warga-five.vercel.app/verify-kuitansi-pbb?NOP=${item.NOP}&start=${startDate.value}&end=${endDate.value}&status=${statusPembayaran}&bayar=${sudahDibayar}&target=${targetTagihan}`;
+
+
+
 
       let qrBase64 = null;
       if (window.QRious) {
