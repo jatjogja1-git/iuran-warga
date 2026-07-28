@@ -70,19 +70,7 @@
               ></v-text-field>
             </v-col>
   
-          <!-- Input Filter Kode Kelurahan -->
-          <v-col cols="12" sm="6" md="3">
-            <v-text-field
-              v-model="filterKelurahan"
-              label="Filter Kode Kelurahan (Cth: 34.01.060.004)"
-              prepend-inner-icon="mdi-map-marker-radius"
-              density="compact"
-              variant="outlined"
-              hide-details
-              clearable
-            ></v-text-field>
-          </v-col>
-
+        
             <!-- Tombol Ekspor Rekap Rentang -->
             <v-col cols="12" sm="6" md="3" class="d-flex justify-sm-end">
               <v-btn
@@ -641,7 +629,7 @@ const bodyData = rekapHistori.value.map((item, index) => {
   const statusPembayaran = (targetTagihan > 0 && sudahDibayar >= targetTagihan) ? 'LUNAS' : 'BELUM LUNAS';
  
   // URL untuk verifikasi online dengan menyertakan parameter lengkap
-  const qrTextContent = `http://192.168.4.140:5199/verify-kuitansi-pbb?NOP=${item.NOP}&start=${startDate.value}&end=${endDate.value}&status=${statusPembayaran}&bayar=${sudahDibayar}&target=${targetTagihan}`;
+  const qrTextContent = `https://iuran-warga-five.vercel.app/verify-kuitansi-pbb?NOP=${item.NOP}&start=${startDate.value}&end=${endDate.value}&status=${statusPembayaran}&bayar=${sudahDibayar}&target=${targetTagihan}`;
   // URL verifikasi singkat agar QR Code tidak terlalu padat
 //const qrTextContent = `http://192.168.4.140:5199/verify-kuitansi-pbb?NOP=${item.NOP}&start=${startDate.value}&end=${endDate.value}`;
 

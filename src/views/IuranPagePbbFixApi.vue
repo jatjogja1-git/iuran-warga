@@ -241,6 +241,7 @@ const tanggalMenu = ref(false);
 const startDate = ref(new Date().toISOString().substring(0, 10)); // Format YYYY-MM-DD
 const endDate = ref(new Date().toISOString().substring(0, 10));
 
+const tableData = ref([]);
 
 // Tambahkan state filter
 const selectedKecamatan = ref(null);
@@ -526,61 +527,6 @@ const totalIuranHeader = computed(() => {
 
 const riwayatWarga = ref([]);
 const totalSudahDibayar = ref(0);
-
-// Fungsi untuk mengecek riwayat pembayaran warga
-
-/*
-const fetchRiwayatWarga = async (NOP) => {
-  if (!NOP) return;
-  
-  // Pastikan koleksi 'pembayaran' memiliki field 'NOP' (kapital)
-  // Gunakan 'where' dengan NOP yang sudah di-trim() untuk keamanan
-  const q = query(collection(db, "pembayaran"), where("NOP", "==", NOP.trim()));
-  
-  const querySnapshot = await getDocs(q);
-  
-  let total = 0;
-  // Periksa apakah query menemukan data
-  console.log("Jumlah dokumen ditemukan untuk NOP", NOP, ":", querySnapshot.size);
-  
-  riwayatWarga.value = querySnapshot.docs.map(doc => {
-    const data = doc.data();
-    // Tambahkan log untuk melihat nilai field 'jumlah' di tiap dokumen
-    console.log("Nilai jumlah:", data.jumlah);
-    
-    total += Number(data.jumlah || 0);
-    return data;
-  });
-  
-  totalSudahDibayar.value = total;
-};
-*/
-
-// Pastikan kode di IuranPagePbb.vue Anda seperti ini:
-/*
-const fetchRiwayatWarga = async (nop) => {
-  // 1. Reset nilai
-  totalSudahDibayar.value = 0; 
-  if (!nop) return;
-
-  // 2. Query ke koleksi "pembayaran"
-  const q = query(collection(db, "pembayaran"), where("NOP", "==", nop));
-  const querySnapshot = await getDocs(q);
-
-  // 3. Debug: Berapa jumlah dokumen yang ditemukan dengan NOP tersebut?
-  console.log("DEBUG: Query NOP", nop, "menemukan", querySnapshot.size, "dokumen.");
-
-  let total = 0;
-  querySnapshot.forEach((doc) => {
-    const data = doc.data();
-    // 4. Debug: Apa isi field jumlah di dokumen ini?
-    console.log("DEBUG: Nilai jumlah pada dokumen", doc.id, "adalah:", data.jumlah);
-    total += Number(data.jumlah || 0);
-  });
-  
-  totalSudahDibayar.value = total;
-};
-*/
 
 
  // --- Ambil Laporan Histori Berdasarkan Interval Tanggal ---
@@ -868,65 +814,78 @@ const formatDate = (dateValue) => {
   }
 };
 
-/*
-const formatRupiah = (amount) => {
-return new Intl.NumberFormat('id-ID', {
-style: 'currency',
-currency: 'IDR',
-minimumFractionDigits: 0
-}).format(amount);
-};
-*/
 
+const exportToExcel = () => {
+      // 1. Ambil data yang sudah terfilter berdasarkan Tanggal (filteredIuran)
+      let dataToExport = filteredIuran.value;
 
+      // 2. Filter tambahan berdasarkan teks pencarian (search: NOP atau Nama Warga) jika diisi
+      const keyword = search.value ? String(search.value).toLowerCase().trim() : '';
+      if (keyword) {
+        dataToExport = dataToExport.filter(item => {
+          const nop = String(item.NOP || '').toLowerCase();
+          const nama = String(item.namaWarga || '').toLowerCase();
+          return nop.includes(keyword) || nama.includes(keyword);
+        });
+      }
 
-// --- Fungsi Ekspor --- sdh jalan ok
-const exportToExcel = (dataType) => {
-  let dataToExport = [];
-  let fileName = '';
+      if (dataToExport.length === 0) {
+        alert('Tidak ada data yang sesuai dengan filter tanggal atau pencarian untuk diekspor!');
+        return;
+      }
 
-  if (dataType === 'pembayaran') {
-    dataToExport = pembayaran.value.map(item => {
-      // Buat salinan objek untuk menghindari modifikasi data asli
-      const newItem = { ...item };
+      // 3. Petakan baris data untuk Excel
+      let totalJumlahNum = 0;
+      const excelRows = dataToExport.map((item, index) => {
+        const jumlahVal = Number(String(item.jumlah || 0).replace(/[^0-9]/g, ''));
+        totalJumlahNum += jumlahVal;
 
-      // Hapus properti yang tidak diinginkan dari hasil ekspor
-      delete newItem.id;
-      // --- PERBAIKAN PENTING DI SINI ---
-      delete newItem.tanggalObj; // Hapus properti tanggalObj agar tidak ikut diekspor
-      delete newItem.wargaId;
-      // --- AKHIR PERBAIKAN ---
+        // Format tanggal menggunakan fungsi yang sudah ada
+        const tanggalFormatted = formatTanggalUntukExcel(item.tanggalObj || item.tanggal);
 
-      // Format properti 'tanggal' ke format DD-MM-YYYY untuk tampilan di Excel
-      if (newItem.tanggal) {
-        newItem.tanggal = formatTanggalUntukExcel(newItem.tanggal);
-      };
+        return {
+          'No': index + 1,
+          'NOP': item.NOP || '',
+          'Tahun Pajak': item.tahun || '',
+          'Nama Warga': item.namaWarga || '',
+          'Tanggal': tanggalFormatted,
+          'Jumlah': jumlahVal
+        };
+      });
 
-      if (newItem.jumlah) {
-//        newItem.jumlah = formatRupiah(newItem.jumlah); //hilangkan ini jika ingin di kolom excel di Sum
-        newItem.jumlah = (newItem.jumlah); //hilangkan ini jika ingin di kolom excel di Sum
+      // 4. Tambahkan baris total di bagian bawah Excel
+      excelRows.push({
+        'No': '',
+        'NOP': '',
+        'Tahun Pajak': '',
+        'Nama Warga': 'TOTAL :',
+        'Tanggal': '',
+        'Jumlah': totalJumlahNum
+      });
 
-      };
+      // 5. Buat Worksheet & Workbook menggunakan SheetJS (XLSX)
+      const ws = XLSX.utils.json_to_sheet(excelRows);
 
-      // Anda juga bisa mengganti nama properti jika diperlukan untuk header Excel yang lebih baik
-      // Misalnya: newItem['Nama Warga'] = newItem.namaWarga; delete newItem.namaWarga;
+      // 6. Format kolom Jumlah (Kolom F) agar otomatis menjadi format mata uang Rupiah di Excel
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        const cellAddress = { c: XLSX.utils.decode_col('F'), r: R };
+        const cellRef = XLSX.utils.encode_cell(cellAddress);
+        if (ws[cellRef] && typeof ws[cellRef].v === 'number') {
+          ws[cellRef].z = '"Rp "#,##0'; 
+        }
+      }
 
-      return newItem;
-    });
-    fileName = 'data_pembayaran.xlsx';
-  }
-  // ... (kode untuk dataType lain seperti 'rekap' jika ada)
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Data Angsuran PBB');
 
-  if (dataToExport.length === 0) {
-    alert("Tidak ada data untuk diekspor.");
-    return;
-  }
-
-  const ws = XLSX.utils.json_to_sheet(dataToExport);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, dataType);
-  XLSX.writeFile(wb, fileName);
-};
+      // 7. Unduh file dengan nama dinamis berdasarkan tanggal filter
+      const startStr = startDate.value || 'semua';
+      const endStr = endDate.value || 'semua';
+      const fileName = `Laporan_Angsuran_${startStr}_hingga_${endStr}.xlsx`;
+      
+      XLSX.writeFile(wb, fileName);
+    };
 
 // Pastikan fungsi formatTanggalUntukExcel tersedia di sini
 const formatTanggalUntukExcel = (dateValue) => {
@@ -1166,22 +1125,6 @@ await fetchIuran();
 // Di dalam onMounted, pastikan wargaList diisi seperti ini:
 const wargaList = ref([]);
 
-/*
-onMounted(async () => {
-  const response = await fetch('/pbb_data.json');
-  const result = await response.json();
-  const data = result[""] || [];
-  
-  // Mapping data dari JSON ke format yang dimengerti v-autocomplete
-  wargaList.value = data.map(item => ({
-   // nama: item.NM_WP_SPPT,
-   nama: `${item.NM_WP_SPPT} (${item.NOP})`,
-    id: item.NOP, // Kita gunakan NOP sebagai ID unik
-  // TAMBAHKAN BARIS INI:
-  tagihanTotal: Number(String(item.PBB_YG_HARUS_DIBAYAR_SPPT || 0).replace(/[^0-9]/g, ''))
-  }));
-});
-*/
 
 
 onMounted(() => {

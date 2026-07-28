@@ -232,10 +232,26 @@ formatFirestoreDate(timestamp) {
   });
 },
 
+
     // Fungsi untuk membaca file JSON yang di-upload
+
     handleFileUpload(event) {
       const file = event.target.files[0];
-      if (!file) return;
+
+      //if (!file) return;
+
+// 1. Validasi ekstensi/tipe file
+  if (!file || file.type !== 'application/json') {
+    alert('Harap unggah file dengan format JSON yang valid!');
+    return;
+  }
+
+
+   // 2. Batasi ukuran file (misal maksimal 2 MB)
+  if (file.size > 2 * 1024 * 1024) {
+    alert('Ukuran file terlalu besar! Maksimal 2 MB.');
+    return;
+  }
 
       this.loading = true;
       const reader = new FileReader();
@@ -258,6 +274,8 @@ formatFirestoreDate(timestamp) {
       };
       reader.readAsText(file);
     },
+   
+    
 
     // Mengambil data pembayaran dari Firestore berdasarkan rentang tanggal
     async getPembayaranFromFirestore() {
@@ -388,124 +406,238 @@ formatFirestoreDate(timestamp) {
     },
 
     exportDataHasil() {
-      if (this.tableData.length === 0) {
-        this.showSnackbar('Tidak ada data untuk diekspor', 'warning');
+      // 1. Ambil kata kunci pencarian
+      const keyword = this.search ? String(this.search).toLowerCase().trim() : '';
+      
+      // 2. Filter langsung dari tableData (data mentah asli tanpa properti 'index' UI)
+      const filteredData = this.tableData.filter(item => {
+        if (!keyword) return true;
+        const nop = String(item.NOP || '').toLowerCase();
+        const nama = String(item.NM_WP_SPPT || '').toLowerCase();
+        const alamat = String(item.ALAMAT || '').toLowerCase();
+        const tahun = String(item.THN_PAJAK_SPPT || '').toLowerCase();
+        
+        return nop.includes(keyword) || nama.includes(keyword) || alamat.includes(keyword) || tahun.includes(keyword);
+      });
+
+      if (filteredData.length === 0) {
+        this.showSnackbar('Tidak ada data yang sesuai dengan filter pencarian untuk diekspor ke JSON!', 'warning');
         return;
       }
-      const jsonString = JSON.stringify(this.tableData, null, 2);
+
+      // 3. Konversi data terfilter murni ke string JSON
+      const jsonString = JSON.stringify(filteredData, null, 2);
+      
+      // 4. Proses unduh file JSON
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Hasil_Rekonsiliasi_PBB_${new Date().toISOString().substring(0, 10)}.json`;
+      link.download = `Hasil_Rekonsiliasi_PBB_${keyword ? 'filtered_' : ''}${new Date().toISOString().substring(0, 10)}.json`;
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      this.showSnackbar('Data berhasil diekspor ke JSON', 'success');
+      
+      this.showSnackbar('Data terfilter berhasil diekspor ke JSON', 'success');
     },
 
-    exportToExcel() {
-      if (this.tableData.length === 0) {
-        this.showSnackbar('Tidak ada data untuk diekspor', 'warning');
+  
+exportToExcel() {
+      // 1. Ambil data yang sedang aktif (sudah difilter oleh kotak pencarian 'search')
+      const keyword = this.search ? this.search.toLowerCase().trim() : '';
+      
+      const filteredData = this.itemsWithIndex.filter(item => {
+        if (!keyword) return true;
+        const nop = String(item.NOP || '').toLowerCase();
+        const nama = String(item.NM_WP_SPPT || '').toLowerCase();
+        const alamat = String(item.ALAMAT || '').toLowerCase();
+        const tahun = String(item.THN_PAJAK_SPPT || '').toLowerCase();
+        
+        return nop.includes(keyword) || nama.includes(keyword) || alamat.includes(keyword) || tahun.includes(keyword);
+      });
+
+      if (filteredData.length === 0) {
+        this.showSnackbar('Tidak ada data yang sesuai dengan filter pencarian untuk diekspor ke Excel!', 'warning');
         return;
       }
-      const ws = XLSX.utils.json_to_sheet(this.tableData);
+
+      // 2. Format data agar bersih dan mudah dibaca saat dibuka di Excel
+      let totalPbbNum = 0;
+      let totalBayarNum = 0;
+      let totalKurangNum = 0;
+
+      const excelRows = filteredData.map((item, index) => {
+        const pbbVal = Number(String(item.PBB_YG_HARUS_DIBAYAR_SPPT || 0).replace(/[^0-9]/g, ''));
+        const bayarVal = Number(String(item.totalTerbayar || 0).replace(/[^0-9]/g, ''));
+        const kurangVal = Number(String(item.rawKurangBayar || 0));
+
+        totalPbbNum += pbbVal;
+        totalBayarNum += bayarVal;
+        totalKurangNum += kurangVal;
+
+        return {
+          'No': index + 1,
+          'NOP': item.NOP,
+          'Nama WP': item.NM_WP_SPPT,
+          'Alamat OP': item.ALAMAT,
+          'Tahun Pajak': item.THN_PAJAK_SPPT,
+          'PBB Harus Bayar': pbbVal,
+          'Total Terbayar': bayarVal,
+          'Kurang Bayar': kurangVal,
+          'Tanggal Bayar': item.tanggal_bayar,
+          'Status': item.status,
+          'Jatuh Tempo': item.TGL_JATUH_TEMPO_SPPT
+        };
+      });
+
+      // 3. Tambahkan baris total di bagian bawah data
+      excelRows.push({
+        'No': '',
+        'NOP': '',
+        'Nama WP': '',
+        'Alamat OP': '',
+        'Tahun Pajak': 'TOTAL :',
+        'PBB Harus Bayar': totalPbbNum,
+        'Total Terbayar': totalBayarNum,
+        'Kurang Bayar': totalKurangNum,
+        'Tanggal Bayar': '',
+        'Status': '',
+        'Jatuh Tempo': ''
+      });
+
+      // 4. Buat Worksheet & Workbook menggunakan SheetJS (XLSX)
+      const ws = XLSX.utils.json_to_sheet(excelRows);
+
+      // (Opsional) Mengatur format angka pada kolom nominal agar tampil sebagai mata uang/angka di Excel
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        // Kolom F (PBB Harus Bayar), G (Total Terbayar), H (Kurang Bayar)
+        ['F', 'G', 'H'].forEach(col => {
+          const cellAddress = { c: XLSX.utils.decode_col(col), r: R };
+          const cellRef = XLSX.utils.encode_cell(cellAddress);
+          if (ws[cellRef] && typeof ws[cellRef].v === 'number') {
+            ws[cellRef].z = '"Rp "#,##0'; // Format mata uang Rupiah di Excel
+          }
+        });
+      }
+
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Rekonsiliasi PBB');
-      XLSX.writeFile(wb, 'Hasil_Rekonsiliasi_PBB.xlsx');
+
+      // 5. Simpan file dengan penamaan dinamis (menyesuaikan jika ada filter pencarian)
+      const fileName = `Rekonsiliasi_PBB_${keyword ? 'filtered_' : ''}${new Date().toISOString().substring(0, 10)}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      
+      this.showSnackbar('Data terfilter berhasil diekspor ke Excel!', 'success');
     },
 
- exportToPDF() {
-  if (this.tableData.length === 0) {
-    this.showSnackbar('Tidak ada data untuk diekspor', 'warning');
-    return;
-  }
-  
-  const doc = new jsPDF('l', 'mm', 'a4');
+exportToPDF() {
+      // 1. Ambil data yang sedang aktif (sudah difilter oleh kotak pencarian 'search')
+      const keyword = this.search ? this.search.toLowerCase().trim() : '';
+      
+      const filteredData = this.itemsWithIndex.filter(item => {
+        if (!keyword) return true;
+        const nop = String(item.NOP || '').toLowerCase();
+        const nama = String(item.NM_WP_SPPT || '').toLowerCase();
+        const alamat = String(item.ALAMAT || '').toLowerCase();
+        const tahun = String(item.THN_PAJAK_SPPT || '').toLowerCase();
+        
+        return nop.includes(keyword) || nama.includes(keyword) || alamat.includes(keyword) || tahun.includes(keyword);
+      });
 
-  // 1. Judul Dokumen
-  doc.setFontSize(16);
-  doc.text("Laporan Rekonsiliasi Pembayaran PBB", 14, 15);
-  doc.setFontSize(10);
-  doc.text(`Dicetak pada: ${new Date().toLocaleDateString('id-ID')}`, 14, 22);
-
-  // 2. Hitung Total Akumulasi (Sum) untuk kolom nominal
-  let totalPbbNum = 0;
-  let totalBayarNum = 0;
-  let totalKurangNum = 0;
-
-  const tableBody = this.tableData.map((item, index) => {
-    const pbbVal = Number(String(item.PBB_YG_HARUS_DIBAYAR_SPPT || 0).replace(/[^0-9]/g, ''));
-    const bayarVal = Number(String(item.totalTerbayar || 0).replace(/[^0-9]/g, ''));
-    const kurangVal = Number(String(item.rawKurangBayar || 0));
-
-    totalPbbNum += pbbVal;
-    totalBayarNum += bayarVal;
-    totalKurangNum += kurangVal;
-
-    return [
-      index + 1,
-      item.NOP,
-      item.NM_WP_SPPT,
-      item.THN_PAJAK_SPPT,
-      this.formatRupiah(pbbVal),
-      this.formatRupiah(bayarVal),
-      this.formatRupiah(kurangVal),
-      item.status
-    ];
-  });
-
-  // 3. Tambahkan Baris Total di bagian akhir tabel
-  tableBody.push([
-    '', '', '', 'TOTAL :', 
-    this.formatRupiah(totalPbbNum), 
-    this.formatRupiah(totalBayarNum), 
-    this.formatRupiah(totalKurangNum), 
-    ''
-  ]);
-
-  // 4. Generate Tabel menggunakan autoTable
-  autoTable(doc, {
-    startY: 30,
-    head: [['No', 'NOP', 'Nama WP', 'Tahun', 'PBB Harus Bayar', 'Total Terbayar', 'Kurang Bayar', 'Status']],
-    body: tableBody,
-    theme: 'grid',
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [41, 128, 185] },
-    columnStyles: {
-      4: { halign: 'right' },
-      5: { halign: 'right' },
-      6: { halign: 'right' },
-      7: { halign: 'center' }
-    },
-    didParseCell: function(data) {
-      if (data.row.index === tableBody.length - 1) {
-        data.cell.styles.fontStyle = 'bold';
-        data.cell.styles.fillColor = [240, 240, 240];
+      if (filteredData.length === 0) {
+        this.showSnackbar('Tidak ada data yang sesuai dengan filter pencarian untuk diekspor!', 'warning');
+        return;
       }
-    }
-  });
+      
+      const doc = new jsPDF('l', 'mm', 'a4');
 
-  // 5. PERBAIKAN UTAMA: Looping halaman di akhir untuk mencetak nomor halaman yang valid
-  const pageCount = doc.internal.getNumberOfPages();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
+      // 2. Judul Dokumen & Info Filter Pencarian
+      doc.setFontSize(16);
+      doc.text("Laporan Rekonsiliasi Pembayaran PBB", 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Dicetak pada: ${new Date().toLocaleDateString('id-ID')}`, 14, 22);
+      
+      if (keyword) {
+        doc.text(`Filter Pencarian: "${this.search}"`, 14, 28);
+      }
 
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i); // Pindah ke halaman ke-i
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    
-    const pageString = `halaman ${i} dari ${pageCount} halaman`;
-    
-    // Cetak teks nomor halaman di pojok kanan bawah setiap halaman
-    doc.text(pageString, pageWidth - 20, pageHeight - 10, { align: 'right' });
-  }
+      // 3. Hitung Total Akumulasi (Sum) untuk data yang terfilter saja
+      let totalPbbNum = 0;
+      let totalBayarNum = 0;
+      let totalKurangNum = 0;
 
-  // 6. Simpan File PDF
-  doc.save('Hasil_Rekonsiliasi_PBB.pdf');
-},
+      const tableBody = filteredData.map((item, index) => {
+        const pbbVal = Number(String(item.PBB_YG_HARUS_DIBAYAR_SPPT || 0).replace(/[^0-9]/g, ''));
+        const bayarVal = Number(String(item.totalTerbayar || 0).replace(/[^0-9]/g, ''));
+        const kurangVal = Number(String(item.rawKurangBayar || 0));
+
+        totalPbbNum += pbbVal;
+        totalBayarNum += bayarVal;
+        totalKurangNum += kurangVal;
+
+        return [
+          index + 1,
+          item.NOP,
+          item.NM_WP_SPPT,
+          item.THN_PAJAK_SPPT,
+          this.formatRupiah(pbbVal),
+          this.formatRupiah(bayarVal),
+          this.formatRupiah(kurangVal),
+          item.status
+        ];
+      });
+
+      // 4. Tambahkan Baris Total di bagian akhir tabel
+      tableBody.push([
+        '', '', '', 'TOTAL :', 
+        this.formatRupiah(totalPbbNum), 
+        this.formatRupiah(totalBayarNum), 
+        this.formatRupiah(totalKurangNum), 
+        ''
+      ]);
+
+      // 5. Generate Tabel menggunakan autoTable (atur startY jadi 32 jika ada info filter pencarian)
+      autoTable(doc, {
+        startY: keyword ? 32 : 26,
+        head: [['No', 'NOP', 'Nama WP', 'Tahun', 'PBB Harus Bayar', 'Total Terbayar', 'Kurang Bayar', 'Status']],
+        body: tableBody,
+        theme: 'grid',
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [41, 128, 185] },
+        columnStyles: {
+          4: { halign: 'right' },
+          5: { halign: 'right' },
+          6: { halign: 'right' },
+          7: { halign: 'center' }
+        },
+        didParseCell: function(data) {
+          if (data.row.index === tableBody.length - 1) {
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fillColor = [240, 240, 240];
+          }
+        }
+      });
+
+      // 6. Cetak nomor halaman dinamis
+      const pageCount = doc.internal.getNumberOfPages();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(9);
+        doc.setTextColor(100);
+        
+        const pageString = `halaman ${i} dari ${pageCount} halaman`;
+        doc.text(pageString, pageWidth - 20, pageHeight - 10, { align: 'right' });
+      }
+
+      // 7. Simpan File PDF
+      doc.save(`Hasil_Rekonsiliasi_PBB_${keyword ? 'filtered_' : ''}${new Date().toISOString().substring(0, 10)}.pdf`);
+    },
 
     logout() {
       this.$router.push('/');
