@@ -65,7 +65,7 @@
           <v-list-item-title>Iuran PBB Warga Via Api</v-list-item-title>
         </v-list-item>
 
-        <v-list-item link to="/IuranPagePbbFixFirestore">
+        <v-list-item link to="/iuranpagepbbfixfirestore">
           <template v-slot:prepend>
             <v-icon>mdi-chart-bar</v-icon>
           </template>
@@ -101,7 +101,8 @@
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router'; // Import useRoute
 import { signOut } from 'firebase/auth';
-import { auth } from '../firebase/config'; // Pastikan path ini benar
+//import { auth } from '../firebase/config'; // Pastikan path ini benar
+import { auth } from '@/firebase/config';
 
 const drawer = ref(false);
 const router = useRouter();

@@ -116,7 +116,7 @@ const routes = [
       },
 
       {
-        path: 'IuranPagePbbFixFirestore', // path akan menjadi /rekap
+        path: 'iuranpagepbbfixfirestore', // path akan menjadi /rekap
         name: 'IuranPagePbbFixFirestore',
         component: IuranPagePbbFixFirestore,
         meta: { requiresAuth: true, title: 'Iuran PBB Warga Cloud' } // Tambahkan meta title
