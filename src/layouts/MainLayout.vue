@@ -65,6 +65,14 @@
           <v-list-item-title>Iuran PBB Warga Via Api</v-list-item-title>
         </v-list-item>
 
+        <v-list-item link to="/IuranPagePbbFixFirestore">
+          <template v-slot:prepend>
+            <v-icon>mdi-chart-bar</v-icon>
+          </template>
+          <v-list-item-title>Iuran PBB Warga Via Cloud</v-list-item-title>
+        </v-list-item>
+
+
         <v-list-item link to="/datblmbayarpbbjsonview">
           <template v-slot:prepend>
             <v-icon>mdi-chart-bar</v-icon>

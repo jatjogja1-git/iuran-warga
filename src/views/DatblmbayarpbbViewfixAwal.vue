@@ -216,21 +216,13 @@ export default {
           { name: '004| BANJAROYO', code: '004' },
         ],
       },
-      tahunList: [
-        { name: '2014', code: '2014' },
-        { name: '2015', code: '2015' },
-        { name: '2016', code: '2016' },
-        { name: '2017', code: '2017' },
-        { name: '2018', code: '2018' },
-        { name: '2019', code: '2019' },
-        { name: '2020', code: '2020' },
-        { name: '2021', code: '2021' },
-        { name: '2022', code: '2022' },
-        { name: '2023', code: '2023' },
-        { name: '2024', code: '2024' },
-        { name: '2025', code: '2025' },
-        { name: '2026', code: '2026' }
-      ],
+      
+
+tahunList: Array.from({ length: 6 }, (_, i) => {
+        const year = String(new Date().getFullYear() - i);
+        return { name: year, code: year };
+      }),
+
       headers: [
         { title: 'No', key: 'index', sortable: false },  
         { title: 'NOP', key: 'NOP'},

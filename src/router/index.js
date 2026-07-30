@@ -22,8 +22,7 @@ import IuranPagePbbFixApi from '../views/IuranPagePbbFixApi.vue'; // Import hala
 import DatblmbayarpbbJsonView from '../views/DatblmbayarpbbJsonView.vue'; // Import halaman baru
 import LapHarianQrcodeTglJson from '../views/LapHarianQrcodeTglJson.vue'; // Import halaman baru
 import LapHarianQrcodeTglJsonFix from '../views/LapHarianQrcodeTglJsonFix.vue'; // Import halaman baru
-
-
+import IuranPagePbbFixFirestore from '../views/IuranPagePbbFixFirestore.vue'; // Import halaman baru
 
 
 import { auth } from '../firebase/config';
@@ -111,6 +110,13 @@ const routes = [
         name: 'IuranPagePbbFixApi',
         component: IuranPagePbbFixApi,
         meta: { requiresAuth: true, title: 'Iuran PBB Warga Via Api' } // Tambahkan meta title
+      },
+
+      {
+        path: 'IuranPagePbbFixFirestore', // path akan menjadi /rekap
+        name: 'IuranPagePbbFixFirestore',
+        component: IuranPagePbbFixFirestore,
+        meta: { requiresAuth: true, title: 'Iuran PBB Warga Cloud' } // Tambahkan meta title
       },
 
       {
