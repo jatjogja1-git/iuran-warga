@@ -82,7 +82,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { db } from '../firebase/config';
+import { db } from '../firebase/config.js';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 
 const route = useRoute();

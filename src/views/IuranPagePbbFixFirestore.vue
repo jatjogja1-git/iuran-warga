@@ -220,7 +220,7 @@ clearable
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 //import { db, auth } from '@/firebase/config';
-import { db, auth } from '../firebase/config';
+import { db, auth } from '../firebase/config.js';
 import { collection, onSnapshot, getDocs, addDoc, deleteDoc, doc, query, orderBy, where, writeBatch } from 'firebase/firestore';
 // Import library ekspor
 import * as XLSX from 'xlsx'; 

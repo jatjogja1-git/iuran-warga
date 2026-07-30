@@ -25,7 +25,7 @@ import LapHarianQrcodeTglJsonFix from '../views/LapHarianQrcodeTglJsonFix.vue'; 
 import IuranPagePbbFixFirestore from '../views/IuranPagePbbFixFirestore.vue'; // Import halaman baru
 
 
-import { auth } from '../firebase/config';
+import { auth } from '../firebase/config.js';
 //import { auth } from '@/firebase/config';
 
 
