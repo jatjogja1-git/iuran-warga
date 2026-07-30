@@ -209,7 +209,7 @@ clearable
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import { db, auth } from '../firebase/config.js';
+import { db, auth } from '../firebase/config';
 import { collection, onSnapshot, getDocs, addDoc, deleteDoc, doc, query, orderBy, where } from 'firebase/firestore';
 // Import library ekspor
 import * as XLSX from 'xlsx'; // Untuk Excel
