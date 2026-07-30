@@ -25,7 +25,10 @@ import LapHarianQrcodeTglJsonFix from '../views/LapHarianQrcodeTglJsonFix.vue'; 
 import IuranPagePbbFixFirestore from '../views/IuranPagePbbFixFirestore.vue'; // Import halaman baru
 
 
-import { auth } from '../firebase/config';
+//import { auth } from '../firebase/config';
+import { auth } from '@/firebase/config';
+
+
 import LapPbbQrcodeTglFix3 from '../views/LapPbbQrcodeTglFix3.vue';
 import VerifyKuitansiPbbFix2 from '../views/VerifyKuitansiPbbFix2.vue';
 //import VerifyKuitansiPbbFix from '../views/VerifyKuitansiPbbFix.vue';
