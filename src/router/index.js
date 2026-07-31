@@ -26,7 +26,7 @@ import IuranPagePbbFixFirestore from '../views/IuranPagePbbFixFirestore.vue'; //
 
 
 //import { auth } from '../firebase/config.js';
-import { auth } from '@/firebase/config';
+import { auth } from '@/firebase/configfix';
 
 
 import LapPbbQrcodeTglFix3 from '../views/LapPbbQrcodeTglFix3.vue';

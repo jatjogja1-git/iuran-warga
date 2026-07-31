@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { collection, getDocs, query, where, and } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db } from '../firebasefix/configfix';
 import { bpajakService } from '@/apiauth_blmbyr.js';
 import { Timestamp } from 'firebase/firestore';
 
