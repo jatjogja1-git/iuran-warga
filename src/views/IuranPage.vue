@@ -234,9 +234,23 @@ jumlah: 0,
 tanggalObj: new Date() // Inisialisasi dengan objek Date hari ini
 });
 
+/*
 const totalIuran = computed(() => {
   return filteredIuran.value.reduce((acc, item) => acc + item.jumlah, 0);
 });
+*/
+
+// Contoh perbaikan pada computed total iuran
+const totalIuran = computed(() => {
+    // Gunakan filteredIuran atau iuran yang sedang tampil
+    return filteredIuran.value.reduce((sum, item) => {
+        // Konversi item.jumlah ke tipe Number secara aman (hapus karakter non-angka jika perlu)
+        const nilaiAngka = Number(String(item.jumlah).replace(/[^0-9.-]+/g, "")) || 0;
+        return sum + nilaiAngka;
+    }, 0);
+});
+
+
 
 /*
 // Fungsi helper untuk menampilkan tanggal dari objek Date

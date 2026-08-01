@@ -181,9 +181,12 @@
   
   // --- Computed ---
   const totalPenerimaanRentang = computed(() => {
-    return rekapHistori.value.reduce((sum, item) => sum + item.totalIuran, 0);
+    return rekapHistori.value.reduce((sum, item) => {
+      // Ubah item.totalIuran menjadi tipe data Number secara aman untuk menghindari concat string
+      const nilaiAngka = Number(String(item.totalIuran).replace(/[^0-9.-]+/g, "")) || 0;
+      return sum + nilaiAngka;
+    }, 0);
   });
-  
   // --- Helper UI Snackbar ---
   const showNotification = (text, color = 'success') => {
     snackbar.value = { show: true, text, color };
@@ -316,7 +319,7 @@
       // Masukkan data transaksi iuran dan kelompokkan per warga
       iuranDalamRentang.forEach(item => {
         if (rekap[item.wargaId]) {
-          rekap[item.wargaId].totalIuran += item.jumlah;
+          rekap[item.wargaId].totalIuran += Number(item.jumlah);
           rekap[item.wargaId].histori.push({
             id: item.id,
             tanggal: item.tanggal,
