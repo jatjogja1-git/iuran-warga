@@ -222,7 +222,7 @@ import { getPdfDoc } from '../plugins/pdf'; // <<< IMPOR FUNGSI PEMBUAT DOC PDF
 
 // Ganti bagian impor service
 //import { bpajakService } from '@/services/apiauth_blmbyr.js'; // Sesuaikan path-nya
-import { bpajakService } from '@/apiauth_blmbyr.js'
+import { bpajakService } from '@/apiauth_blmbyrfix.js'
 
 
 
