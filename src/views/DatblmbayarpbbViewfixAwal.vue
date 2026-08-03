@@ -72,7 +72,7 @@
 </template>
 
 <script>
-import { bpajakService } from '@/apiauth_blmbyr.js'
+import { bpajakService } from '@/apiauth_blmbyrfix.js'
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx'
