@@ -18,7 +18,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { db } from '../firebase/config';
+import { db } from '../firebase/configfix';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
 // Variabel untuk menyimpan data statistik

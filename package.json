@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
-    "axios": "^1.18.1",
+    "axios": "^1.19.0",
     "firebase": "^12.0.0",
     "firebase-admin": "^14.2.0",
     "html2canvas": "^1.4.1",

@@ -101,7 +101,7 @@
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router'; // Import useRoute
 import { signOut } from 'firebase/auth';
-import { auth } from '../firebasefix/config'; // Pastikan path ini benar
+import { auth } from '../firebase/configfix'; // Pastikan path ini benar
 //import { auth } from '@/firebase/configfix';
 
 const drawer = ref(false);

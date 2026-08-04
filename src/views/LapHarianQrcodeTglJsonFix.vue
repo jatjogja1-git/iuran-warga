@@ -143,7 +143,7 @@
   
   <script setup>
   import { ref, onMounted, computed } from 'vue';
-  import { db } from '../firebasefix/configfix';
+  import { db } from '../firebase/configfix';
   import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
   
   // Library ekspor PDF

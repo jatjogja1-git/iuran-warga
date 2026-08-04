@@ -71,7 +71,7 @@ clearable
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { db, auth } from '../firebase/config';
+import { db, auth } from '../firebase/configfix';
 // Menggunakan FieldValue.serverTimestamp() dari Firestore
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, FieldValue, query, orderBy, serverTimestamp } from 'firebase/firestore';
 //serverTimestamp // <-- Impor serverTimestamp secara langsung

@@ -138,7 +138,7 @@ clearable
 <script setup>
 import { computed } from 'vue';
 import { ref, onMounted } from 'vue';
-import { db, auth } from '../firebase/config';
+import { db, auth } from '../firebase/configfix';
 import { collection, getDocs, addDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 //import { useRouter } from 'vue-router';
 //import { signOut } from 'firebase/auth';

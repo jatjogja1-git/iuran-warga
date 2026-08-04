@@ -60,7 +60,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { db, auth } from '../firebase/config';
+import { db, auth } from '../firebase/configfix';
 import { collection, getDocs, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
 
 import { useRouter } from 'vue-router';

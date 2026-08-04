@@ -132,7 +132,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from '../firebasefix/configfix'; // Sesuaikan jalur file konfigurasi Firebase Anda
+import { db } from '../firebase/configfix'; // Sesuaikan jalur file konfigurasi Firebase Anda
 
 export default {
   name: 'DatobpajakUploadView',
