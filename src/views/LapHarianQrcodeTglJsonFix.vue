@@ -970,6 +970,8 @@ const generatePdfLaporanHistori = () => {
     const columns = [
       { header: 'No', dataKey: 'no' },
       { header: 'Nama Warga & Rincian Histori Pembayaran', dataKey: 'namaWarga' },
+      { header: 'PBB Harus Bayar', dataKey: 'targetPbb' }, // Kolom Baru
+      { header: 'Kurang Bayar', dataKey: 'kurangBayar' },      // Kolom Baru
       { header: 'Status', dataKey: 'status' },
       { header: 'Total Bayar', dataKey: 'jumlah' },
       { header: 'Verifikasi QR', dataKey: 'qrcode' }
@@ -978,6 +980,7 @@ const generatePdfLaporanHistori = () => {
     const bodyData = filteredRekapHistori.value.map((item, index) => {
       const targetTagihan = item.targetTagihan || 0; 
       const sudahDibayar = item.totalIuran || 0;
+      const kurangBayar = Math.max(0, targetTagihan - sudahDibayar);
       const statusPembayaran = (targetTagihan > 0 && sudahDibayar >= targetTagihan) ? 'LUNAS' : 'BELUM LUNAS';
       
       // Susun teks rincian histori pembayaran ke dalam kolom nama warga
@@ -1011,6 +1014,8 @@ const generatePdfLaporanHistori = () => {
       return {
         no: index + 1,
         namaWarga: rincianHistoriText,
+        targetPbb: formatRupiah(targetTagihan),   // Data PBB Harus Bayar
+        kurangBayar: formatRupiah(kurangBayar),   // Data Kurang Bayar
         status: statusPembayaran,
         jumlah: formatRupiah(item.totalIuran),
         qrcode: qrBase64 
@@ -1025,8 +1030,8 @@ const generatePdfLaporanHistori = () => {
       rowPageBreak: 'avoid',
       styles: {
         valign: 'middle',
-        fontSize: 8.5,
-        cellPadding: 3,
+        fontSize: 8,
+        cellPadding: 2.5,
         lineColor: [226, 232, 240],
         lineWidth: 0.2,
         minCellHeight: 18
@@ -1038,12 +1043,15 @@ const generatePdfLaporanHistori = () => {
         halign: 'center',
         minCellHeight: 8
       },
+      // --- Penyesuaian Lebar Kolom agar Muat di Kertas A4 Portrait ---
       columnStyles: {
         no: { halign: 'center', cellWidth: 10 },
-        namaWarga: { cellWidth: 95 }, // Diperlebar agar teks histori muat dengan rapi
-        status: { halign: 'center', cellWidth: 28 },
-        jumlah: { halign: 'right', cellWidth: 28 },
-        qrcode: { halign: 'center', cellWidth: 21 }
+        namaWarga: { cellWidth: 66 }, // Diperlebar agar teks histori muat dengan rapi
+        targetPbb: { halign: 'right', cellWidth: 26 },
+        kurangBayar: { halign: 'right', cellWidth: 26 },
+        status: { halign: 'center', cellWidth: 22 },
+        jumlah: { halign: 'right', cellWidth: 26 },
+        qrcode: { halign: 'center', cellWidth: 20 }
       },
       didParseCell: (data) => {
         if (data.section === 'body' && data.column.dataKey === 'status') {
@@ -1069,7 +1077,7 @@ const generatePdfLaporanHistori = () => {
       },
       foot: [
         [
-          { content: 'Total Penerimaan Filter Ini', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', minCellHeight: 10 } },
+          { content: 'Total Penerimaan Filter Ini', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', minCellHeight: 10 } },
           { content: formatRupiah(totalPenerimaanLangsung), colSpan: 2, styles: { halign: 'right', fontStyle: 'bold', minCellHeight: 10} }
         ]
       ],

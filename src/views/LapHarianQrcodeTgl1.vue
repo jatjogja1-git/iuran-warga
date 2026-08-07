@@ -525,6 +525,7 @@ const generatePdfLaporanHistori = () => {
       { header: 'Jumlah Transaksi', dataKey: 'transaksi' },
       { header: 'Status Pembayaran', dataKey: 'status' },
       { header: 'Total Penerimaan', dataKey: 'jumlah' },
+      { header: 'Kurang Bayar', dataKey: 'kurangBayar' }, // Kolom Baru
       { header: 'Verifikasi QR', dataKey: 'qrcode' }
     ];
 
@@ -544,12 +545,20 @@ const generatePdfLaporanHistori = () => {
     return tglBayar >= batasAwal && tglBayar <= batasAkhir;
   });
 
-  // 2. Hitung total akumulasi khusus untuk periode bulan yang dipilih tersebut
-  const totalIuranPeriodeIni = historiSesuaiPeriode.reduce((sum, h) => sum + h.jumlah, 0);
+
+  // 2. Hitung total akumulasi dengan konversi aman ke tipe Number
+const totalIuranPeriodeIni = historiSesuaiPeriode.reduce((sum, h) => {
+  const nominalAngka = Number(String(h.jumlah).replace(/[^0-9.-]+/g, "")) || 0;
+  return sum + nominalAngka;
+}, 0);
 
   // 3. Tentukan status kelunasan secara konsisten berdasarkan total akumulasi periode tersebut
   // JANGAN gunakan item.totalIuran global jika nilainya tidak ter-update otomatis oleh filter tanggal Vue
   const statusPembayaran = totalIuranPeriodeIni >= 15000 ? 'LUNAS' : 'BELUM LUNAS';
+
+// Hitung selisih kekurangan (Target default Rp 15.000)
+      const targetIuran = 15000;
+      const sisaKurangBayar = Math.max(0, targetIuran - totalIuranPeriodeIni);
 
   const validationCode = `RT-VAL-HIST-${item.wargaId}-${startDate.value.replace(/-/g, '')}`;
   const qrTextContent = `https://iuran-warga-five.vercel.app/verify-kuitansi?wargaId=${item.wargaId}&start=${startDate.value}&end=${endDate.value}`;
@@ -571,6 +580,7 @@ const generatePdfLaporanHistori = () => {
     transaksi: `${historiSesuaiPeriode.length} kali bayar`,
     status: statusPembayaran, // Sekarang status ini dijamin 100% sama dengan hasil scan QR Code
     jumlah: formatRupiah(totalIuranPeriodeIni),
+    kurangBayar: statusPembayaran === 'LUNAS' ? 'Rp 0' : formatRupiah(sisaKurangBayar), // Format Kurang Bayar
     qrcode: qrBase64
   };
 });
@@ -588,7 +598,7 @@ const generatePdfLaporanHistori = () => {
 
       styles: {
         valign: 'middle',     // Mengatur posisi teks semua kolom tegak lurus di tengah
-        fontSize: 9,
+        fontSize: 8.5,
         cellPadding: 3,
         lineColor: [226, 232, 240],
         lineWidth: 0.2,
@@ -605,10 +615,11 @@ const generatePdfLaporanHistori = () => {
       
       columnStyles: {
         no: { halign: 'center', cellWidth: 10 },
-        namaWarga: { fontStyle: 'bold', cellWidth: 45 },
-        transaksi: { halign: 'center', cellWidth: 30 },
-        status: { halign: 'center', cellWidth: 32 },
-        jumlah: { halign: 'right', cellWidth: 35 },
+        namaWarga: { fontStyle: 'bold', cellWidth: 38 },
+        transaksi: { halign: 'center', cellWidth: 24 },
+        status: { halign: 'center', cellWidth: 27 },
+        jumlah: { halign: 'right', cellWidth: 28 },
+        kurangBayar: { halign: 'right', cellWidth: 28 }, // Lebar kolom baru
         qrcode: { halign: 'center', cellWidth: 30 } // Menghapus minCellHeight dari sini
       },
       
@@ -639,7 +650,7 @@ const generatePdfLaporanHistori = () => {
       foot: [
         [
           { content: 'Total Penerimaan Rentang Ini', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold', minCellHeight: 10 } },
-          { content: formatRupiah(totalPenerimaanLangsung), colSpan: 2, styles: { halign: 'right', fontStyle: 'bold', minCellHeight: 10} }
+          { content: formatRupiah(totalPenerimaanLangsung), colSpan: 3, styles: { halign: 'right', fontStyle: 'bold', minCellHeight: 10} }
         ]
       ],
       margin: { left: 14, right: 14 }

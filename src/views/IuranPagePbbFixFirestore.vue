@@ -654,6 +654,8 @@ const deleteIuran = async (id) => {
   try {
     const iuranDocRef = doc(db, "pembayaran", id);
     await deleteDoc(iuranDocRef);
+    // Perbarui state lokal secara langsung agar tabel langsung merefresh tampilannya
+    pembayaran.value = pembayaran.value.filter(item => item.id !== id);
     alert("Data berhasil dihapus!");
   } catch (error) {
     console.error("Gagal menghapus data: ", error);
@@ -750,9 +752,11 @@ const exportFilteredIuranByWargaToPdf = () => {
   doc.save(`iuran_pbb.pdf`);
 };
 
+
+/*
 onMounted(async () => {
   await loadMasterDataFromFirestore(); // Memuat data master dari Firestore
-  await fetchIuran();                  // Memuat riwayat pembayaran dari Firestore
+  await fetchIuran();  // Memuat riwayat pembayaran dari Firestore
 });
 
 // Menggunakan onSnapshot agar tabel pembayaran realtime otomatis terupdate
@@ -765,6 +769,30 @@ onMounted(() => {
     }));
   });
 });
+*/
+
+// --- Ganti blok onMounted yang terpisah dengan satu blok gabungan ini ---
+onMounted(async () => {
+  // 1. Muat data master dan data awal terlebih dahulu
+  await loadMasterDataFromFirestore();
+  await fetchIuran();                  
+
+  // 2. Pasang listener real-time onSnapshot untuk auto-refresh otomatis
+  const q = query(collection(db, "pembayaran"), orderBy("tanggal", "desc"));
+  onSnapshot(q, (snapshot) => {
+    pembayaran.value = snapshot.docs.map(doc => {
+      const dataIuran = doc.data();
+      return {
+        id: doc.id,
+        ...dataIuran,
+        tanggal: dataIuran.tanggal,
+        tanggalObj: dataIuran.tanggal ? dataIuran.tanggal.toDate() : null,
+        namaWarga: dataIuran.namaWarga || 'Warga Tidak Ditemukan'
+      };
+    });
+  });
+});
+
 
 const saveIuran = async () => {
   if (!newIuran.value.wargaId) {

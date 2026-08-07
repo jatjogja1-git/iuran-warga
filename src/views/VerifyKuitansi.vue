@@ -138,11 +138,44 @@
     let tempTotal = 0;
     const tempHistori = [];
 
+  /*
     querySnapshot.forEach((docSnapshot) => {
       const data = docSnapshot.data();
-      tempTotal += data.jumlah;
+      
+      // Bersihkan dan ubah data.jumlah menjadi angka murni (Number)
+      const nominalAngka = Number(String(data.jumlah).replace(/[^0-9.-]+/g, "")) || 0;
+      
+      tempTotal += nominalAngka;
       tempHistori.push(data);
     });
+*/
+
+
+querySnapshot.forEach((docSnapshot) => {
+      const data = docSnapshot.data();
+      
+      let nominalAngka = 0;
+      if (typeof data.jumlah === 'number') {
+        nominalAngka = data.jumlah;
+      } else if (typeof data.jumlah === 'string') {
+        // Jika format string menyimpan titik sebagai pemisah ribuan, 
+        // bersihkan titik atau ambil string mentahnya jika itu nilai akumulasi
+        let cleanStr = data.jumlah.trim();
+        
+        // Jika string terlalu panjang karena penumpukan string salah sebelumnya, 
+        // kita parse atau ambil bagian validnya saja, misal konversi aman:
+        nominalAngka = parseFloat(cleanStr.replace(/\./g, '').replace(',', '.')) || 0;
+        
+        // Pengaman ekstra jika data string terlanjur menjadi angka gabungan raksasa akibat bug sebelumnya:
+        if (isNaN(nominalAngka) || nominalAngka > 1000000000) {
+          nominalAngka = 0; // atau tetapkan nilai default transaksi normal misal 5000 / 10000
+        }
+      }
+      
+      tempTotal += nominalAngka;
+      tempHistori.push(data);
+    });
+
 
     // Urutkan transaksi dari terlama ke terbaru
     tempHistori.sort((a, b) => {
